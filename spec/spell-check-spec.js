@@ -1,4 +1,5 @@
 const { waitFor } = require("./async-spec-helpers");
+const path = require("node:path");
 const { scopeDescriptorMatchesSelector } = require("../lib/scope-helper");
 const SpellCheckTask = require("../lib/spell-check-task");
 
@@ -78,6 +79,24 @@ describe("spell-check", () => {
     lumine.commands.dispatch(lumine.views.getView(lumine.workspace), "spell-check:toggle");
 
     expect(markers().length).toBe(0);
+  });
+
+  it("removes service checkers when their registration is disposed", () => {
+    const checkerPath = path.join(__dirname, "fixtures", "service-checker.js");
+    const checker = require(checkerPath);
+    checker.deactivated = false;
+    const firstRegistration = main.consumeSpellCheckers(checkerPath);
+    const secondRegistration = main.consumeSpellCheckers(checkerPath);
+
+    expect(main.instance.checkers).toContain(checker);
+    firstRegistration.dispose();
+
+    expect(main.instance.checkers).toContain(checker);
+    expect(checker.deactivated).toBe(false);
+    secondRegistration.dispose();
+
+    expect(main.instance.checkers).not.toContain(checker);
+    expect(checker.deactivated).toBe(true);
   });
 
   it("matches ordered descendant scopes and comma-separated alternatives", () => {

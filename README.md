@@ -16,23 +16,28 @@ To install `spell-check` search for _spell-check_ in the Install pane of the Lum
 
 ## Commands
 
-Commands available in `lumine-workspace` and `lumine-text-editor`:
+Commands available in `lumine-workspace`:
 
 - `spell-check:toggle`: enable or disable checking in the active editor.
+
+Commands available in `lumine-text-editor`:
+
 - `spell-check:correct-misspelling`: show corrections for the misspelling under the cursor.
 
-## Configuration
+## Customization
 
-- `spell-check.grammars`: scopes eligible for checking.
-- `spell-check.excludedScopes`: descendant scopes that are never checked.
-- `spell-check.useSystem`: use the operating system spelling service when supported.
-- `spell-check.useLocales`: enable Hunspell locale dictionaries.
-- `spell-check.locales`: locale identifiers to load.
-- `spell-check.localePaths`: additional dictionary directories.
-- `spell-check.knownWords`: words always considered correct.
-- `spell-check.addKnownWords`: offer actions that extend Known Words.
-- `spell-check.noticesMode`: choose popup and console reporting behavior.
-- `spell-check.enableDebug`: emit checker diagnostics.
+Adjust misspelling markers in your `styles.css`:
+
+```css
+.spell-check-misspelling .region {
+  border-color: var(--text-color-warning);
+  border-width: 3px;
+}
+```
+
+## Services
+
+- **[spell-check](docs/spell-check.md)** (`^1.0.0`): consumed to combine external checker modules with the built-in checkers.
 
 ## Contributing
 

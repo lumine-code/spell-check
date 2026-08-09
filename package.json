@@ -8,11 +8,11 @@
   "bugs": { "url": "https://github.com/lumine-code/spell-check/issues" },
   "license": "MIT",
   "main": "./lib/main",
-  "files": ["keymaps", "lib", "menus", "spec", "styles"],
+  "files": ["docs", "keymaps", "lib", "menus", "spec", "styles"],
   "engines": { "lumine": "^1.0.0" },
   "backgroundTips": [
-    "Open spelling corrections for the word under the cursor with {{ 'spell-check:correct-misspelling' | keystroke }}",
-    "Temporarily disable checking in the current editor with the spell-check toggle command"
+    "You can open spelling corrections for the word under the cursor with {{ 'spell-check:correct-misspelling' | keystroke }}",
+    "You can temporarily disable checking in the current editor with the spell-check toggle command."
   ],
   "scripts": {
     "test": "lumine --test spec",
@@ -26,80 +26,70 @@
       "description": "Root scopes or detailed scope selectors that should be checked.",
       "type": "array",
       "items": { "type": "string" },
-      "default": ["source.asciidoc", "source.gfm", "text.git-commit", "text.plain", "text.plain.null-grammar", "source.rst", "text.restructuredtext"],
-      "order": 1
+      "default": ["source.asciidoc", "source.gfm", "text.git-commit", "text.plain", "text.plain.null-grammar", "source.rst", "text.restructuredtext"]
     },
     "excludedScopes": {
       "title": "Excluded Scopes",
       "description": "Detailed scope selectors ignored inside checked grammars.",
       "type": "array",
       "items": { "type": "string" },
-      "default": [],
-      "order": 2
+      "default": []
     },
     "useSystem": {
       "title": "Use System Dictionaries",
       "description": "Use the operating system spelling service when supported.",
       "type": "boolean",
-      "default": true,
-      "order": 3
+      "default": true
     },
     "useLocales": {
       "title": "Use Locale Dictionaries",
       "description": "Load Hunspell dictionaries for the configured locales.",
       "type": "boolean",
-      "default": true,
-      "order": 4
+      "default": true
     },
     "locales": {
       "title": "Locales",
       "description": "Locale identifiers such as en-US or pl-PL; an empty list uses the detected default.",
       "type": "array",
       "items": { "type": "string" },
-      "default": [],
-      "order": 5
+      "default": []
     },
     "localePaths": {
       "title": "Dictionary Search Paths",
       "description": "Additional directories and path specifications containing Hunspell dictionaries.",
       "type": "array",
       "items": { "type": "string" },
-      "default": [],
-      "order": 6
+      "default": []
     },
     "knownWords": {
       "title": "Known Words",
       "description": "Words treated as correct; prefix an entry with ! to make it case-sensitive.",
       "type": "array",
       "items": { "type": "string" },
-      "default": [],
-      "order": 7
+      "default": []
     },
     "addKnownWords": {
       "title": "Offer Known Word Actions",
       "description": "Include an action that adds the selected word to Known Words.",
       "type": "boolean",
-      "default": false,
-      "order": 8
+      "default": false
     },
     "noticesMode": {
       "title": "Dictionary Notices",
       "description": "Choose where dictionary loading messages are displayed.",
       "type": "string",
-      "default": "both",
       "enum": [
         { "value": "both", "description": "Popup and console" },
         { "value": "popup", "description": "Popup only" },
         { "value": "console", "description": "Console only" }
       ],
-      "order": 9
+      "default": "both"
     },
     "enableDebug": {
       "title": "Debug Logging",
       "description": "Write detailed checker diagnostics to the developer console.",
       "type": "boolean",
-      "default": false,
-      "order": 10
+      "default": false
     }
   },
   "consumedServices": {
