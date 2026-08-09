@@ -1,125 +1,39 @@
-##### Atom and all repositories under Atom will be archived on December 15, 2022. Learn more in our [official announcement](https://github.blog/2022-06-08-sunsetting-atom/)
- # Spell Check package
-[![CI](https://github.com/atom/spell-check/actions/workflows/ci.yml/badge.svg)](https://github.com/atom/spell-check/actions/workflows/ci.yml)
+# spell-check
 
-Highlights misspelling in Atom and shows possible corrections.
+Highlight misspelled words and offer contextual corrections.
 
-Use <kbd>cmd-shift-:</kbd> for Mac or <kbd>ctrl-shift-:</kbd> for Windows or Linux to bring up the list of corrections when your cursor is on a misspelled word.
+## Features
 
-By default spell check is enabled for the following files:
+- **Native checking**: uses system spelling services where supported and Hunspell dictionaries everywhere.
+- **Scoped proofreading**: checks entire grammars or selected descendant scopes and respects exclusions.
+- **Contextual corrections**: offers replacements at the cursor and directly in the editor context menu.
+- **Known words**: keeps a configurable case-sensitive or case-insensitive personal word list.
+- **Checker services**: combines optional spelling providers with the built-in native and locale checkers.
 
-* Plain Text
-* GitHub Markdown
-* Git Commit Message
-* AsciiDoc
-* reStructuredText
+## Installation
 
-You can override this from the _Spell Check_ settings in the Settings View (<kbd>cmd-,</kbd>). The Grammars config option is a list of scopes for which the package will check for spelling errors.
+To install `spell-check` search for _spell-check_ in the Install pane of the Lumine settings or run `lumine --install lumine-code/spell-check`.
 
-To enable _Spell Check_ for your current file type: put your cursor in the file, open the [Command Palette](https://github.com/atom/command-palette)
-(<kbd>cmd-shift-p</kbd> for Mac or <kbd>ctrl-shift-p</kbd> for Windows or Linux), and run the `Editor: Log Cursor Scope` command. This will trigger a notification which will contain a list of scopes. The first scope that's listed is the one you should add to the list of scopes in the settings for the _Spell Check_ package. Here are some examples: `source.coffee`, `text.plain`, `text.html.basic`.
+## Commands
 
-## Changing the dictionary
+Commands available in `lumine-workspace` and `lumine-text-editor`:
 
-Except for Mac, Atom needs to know what language to use to perform spell-checking. To list these, set the "Locales" configuration option to the [IETF tag](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry) (en-US, fr-FR, etc). More than one language can be used, simply separate them by commas.
+- `spell-check:toggle`: enable or disable checking in the active editor.
+- `spell-check:correct-misspelling`: show corrections for the misspelling under the cursor.
 
-If no locale is given, then Atom will attempt to infer the language based on environment variables and settings.
+## Configuration
 
-If any value is given for the "Locales", then Atom will not automatically add the browser language. So, if your browser is United States English (`en-US`), leaving this blank will still do US English checking. However, if it the "Locales" is set to French (`fr-FR`), then the checker will only check French. If the "Locales" is set to `en-US, fr-FR`, then both languages will be checked.
+- `spell-check.grammars`: scopes eligible for checking.
+- `spell-check.excludedScopes`: descendant scopes that are never checked.
+- `spell-check.useSystem`: use the operating system spelling service when supported.
+- `spell-check.useLocales`: enable Hunspell locale dictionaries.
+- `spell-check.locales`: locale identifiers to load.
+- `spell-check.localePaths`: additional dictionary directories.
+- `spell-check.knownWords`: words always considered correct.
+- `spell-check.addKnownWords`: offer actions that extend Known Words.
+- `spell-check.noticesMode`: choose popup and console reporting behavior.
+- `spell-check.enableDebug`: emit checker diagnostics.
 
-### Missing Languages
+## Contributing
 
-This plugin uses the existing system dictionaries. If a locale is selected that is not installed, a warning will pop up when a document that would be spell-checked is loaded. To disable this, either remove the incorrect language from the "Locales" configuration or clear the check on "Use Locales" to disable it entirely.
-
-To get the search paths used to look for a dictionary, make sure the "Notices Mode" is set to "console" or "both", then reload Atom. The developer's console will have the directory list.
-
-## Mac
-
-On the Mac, checking "Use System" will use the operating system's spellchecking library. This uses all of the user's loaded dictionaries and doesn't require any customization within Atom.
-
-Checking "Use Locales" and providing locales would use Hunspell as additional dictionaries. Having "Use Locales" checked but no locales given will do nothing.
-
-## Windows 8 and Higher
-
-For Windows 8 and 10, this package uses the Windows spell checker, so you must install the language using the regional settings before the language can be chosen inside Atom.
-
-![Add the language from the Language and Regions settings panel](docs/windows-10-language-settings.png)
-
-If your Windows user does not have Administration privileges, you'll need to do an extra step once the language has been added to enable the spell checker. To do so, you need to install the "Basic typing" language option by following the next steps (you'll be asked for your administrator password):
-
-![Click on the "Options" button on the added language](docs/windows-10-language-settings-2.png)
-
-![Download the "Basic Typing" language option](docs/windows-10-language-settings-3.png)
-
-Once the additional language is added, Atom will need to be restarted and configured to use it. Add the IEFT tag into the "Locales" setting for the language to be set.
-
-If a Hunspell dictionary is found on a path (see below), it will be used in favor of the Windows API.
-
-## Linux
-
-For all Linux-based operating systems, "Use System" does nothing. It can remained checked but has no impact. "Use Locales" is required for spell-checking.
-
-### Debian, Ubuntu, and Mint
-
-On Ubuntu, installing "Language Support" may solve problems with the dictionaries. For other distributions (or if Language Support doesn't work), you may use `apt` to install the dictionaries.
-
-```
-sudo apt-get install hunspell-en-gb
-sudo apt-get install myspell-en-gb
-```
-
-On RedHat, the following should work for Italian:
-
-```
-sudo dnf install hunspell
-sudo dnf install hunspell-it
-```
-
-You can get a list of currently installed languages with:
-
-```
-/usr/bin/hunspell -D
-```
-
-Atom may require a restart to pick up newly installed dictionaries.
-
-### Arch Linux
-
-A language may be installed by running:
-
-```
-pacman -S hunspell-en_GB
-```
-
-For the time being, a soft link may be required if the dictionary provided is "large".
-
-```
-cd /usr/share/hunspell
-sudo ln -s en_GB-large.dic en_GB.dic
-sudo ln -s en_GB-large.aff en_GB.aff
-```
-
-## Hunspell Dictionaries
-
-For all platforms, a Hunspell-compatible dictionary is also supported. To use this, a `.dic` and `.aff` need to be located in one of the default search directories or in a directory entered into "Locale paths" (multiples may be entered with commas separating them). If the appropriate files are found for the locale and "Use Locales" is checked, then the dictionary will be used.
-
-For example, if the following is set, then `/usr/share/hunspell/en_US.dic` will be used:
-
-- Use Locales: checked
-- Locales: `en-US`
-- Locale Paths: `/usr/share/hunspell`
-
-If "Locales" is not provided, then the user's current language will be inferred from environmental settings.
-
-In addition to what is provided, the following paths are checked:
-
-- `/usr/share/hunspell` (Linux only)
-- `/usr/share/myspell` (Linux only)
-- `/usr/share/myspell/dicts` (Linux only)
-- `/` (Mac only)
-- `/System/Library/Spelling` (Mac only)
-- `C:\` (Windows only)
-
-Dictionaries can be downloaded from various sites (such as [wooorm's repository](https://github.com/wooorm/dictionaries) or [LibreOffice's](https://github.com/LibreOffice/dictionaries)), but the file has to be renamed `locale.dic` and `locale.aff`.
-
-*Example locations to download are not an endorsement.*
+Got ideas to make this package better, found a bug, or want to help add new features? Just drop your thoughts on GitHub. Any feedback is welcome!

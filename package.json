@@ -1,134 +1,121 @@
 {
   "name": "spell-check",
-  "version": "0.77.1",
-  "main": "./lib/main",
-  "description": "Highlights misspelled words and shows possible corrections.",
-  "dependencies": {
-    "atom-pathspec": "^0.0.0",
-    "atom-select-list": "^0.7.0",
-    "debug": "^4.1.1",
-    "multi-integer-range": "^2.0.0",
-    "natural": "^0.4.0",
-    "spellchecker": "^3.7.1",
-    "spelling-manager": "^1.1.0",
-    "underscore-plus": "^1"
-  },
-  "devDependencies": {
-    "husky": "^4.2.5",
-    "prettier": "^2.1.1"
-  },
-  "repository": "https://github.com/atom/spell-check",
+  "author": "lumine-code",
+  "version": "1.0.0",
+  "description": "Highlight misspelled words and offer contextual corrections.",
+  "keywords": ["dictionary", "grammar", "proofreading", "writing", "language"],
+  "repository": "https://github.com/lumine-code/spell-check",
+  "bugs": { "url": "https://github.com/lumine-code/spell-check/issues" },
   "license": "MIT",
-  "engines": {
-    "atom": "*"
-  },
+  "main": "./lib/main",
+  "files": ["keymaps", "lib", "menus", "spec", "styles"],
+  "engines": { "lumine": "^1.0.0" },
+  "backgroundTips": [
+    "Open spelling corrections for the word under the cursor with {{ 'spell-check:correct-misspelling' | keystroke }}",
+    "Temporarily disable checking in the current editor with the spell-check toggle command"
+  ],
   "scripts": {
-    "format": "prettier --write \"spec/*.js\" \"lib/**/*.js\" \"script/*.js\" --loglevel warn"
+    "test": "lumine --test spec",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "configSchema": {
     "grammars": {
+      "title": "Checked Grammars",
+      "description": "Root scopes or detailed scope selectors that should be checked.",
       "type": "array",
-      "default": [
-        "source.asciidoc",
-        "source.gfm",
-        "text.git-commit",
-        "text.plain",
-        "text.plain.null-grammar",
-        "source.rst",
-        "text.restructuredtext"
-      ],
-      "description": "List of scopes for languages which will be checked for misspellings. See [the README](https://github.com/atom/spell-check#spell-check-package) for more information on finding the correct scope for a specific language.",
+      "items": { "type": "string" },
+      "default": ["source.asciidoc", "source.gfm", "text.git-commit", "text.plain", "text.plain.null-grammar", "source.rst", "text.restructuredtext"],
       "order": 1
     },
     "excludedScopes": {
+      "title": "Excluded Scopes",
+      "description": "Detailed scope selectors ignored inside checked grammars.",
       "type": "array",
-      "items": {
-        "type": "string"
-      },
+      "items": { "type": "string" },
       "default": [],
-      "description": "List of sub-scopes that will be ignored. Specify the most detailed scope to avoid ignoring otherwise relevant text. The scopes will be parsed as regular expressions. See [the README](https://github.com/atom/spell-check#spell-check-package-) for more information on finding the correct scope for a specific language.",
       "order": 2
     },
     "useSystem": {
+      "title": "Use System Dictionaries",
+      "description": "Use the operating system spelling service when supported.",
       "type": "boolean",
       "default": true,
-      "description": "If checked, use the built-in spell checking on macOS and some versions of Windows. This setting is ignored on Linux, even if checked.",
       "order": 3
     },
     "useLocales": {
+      "title": "Use Locale Dictionaries",
+      "description": "Load Hunspell dictionaries for the configured locales.",
       "type": "boolean",
       "default": true,
-      "description": "If checked, then the locales below will be used for checking.",
       "order": 4
     },
     "locales": {
+      "title": "Locales",
+      "description": "Locale identifiers such as en-US or pl-PL; an empty list uses the detected default.",
       "type": "array",
+      "items": { "type": "string" },
       "default": [],
-      "items": {
-        "type": "string"
-      },
-      "description": "List of locales to use for the system spell-checking. Examples would be `en-US` or `de-DE`. If this is blank, then the default language for the user will be used.",
       "order": 5
     },
     "localePaths": {
+      "title": "Dictionary Search Paths",
+      "description": "Additional directories and path specifications containing Hunspell dictionaries.",
       "type": "array",
+      "items": { "type": "string" },
       "default": [],
-      "items": {
-        "type": "string"
-      },
-      "description": "List of additional paths to search for dictionary files when checking using locales. If a locale cannot be found in these, the internal code will attempt to find it using common search paths.",
       "order": 6
     },
     "knownWords": {
+      "title": "Known Words",
+      "description": "Words treated as correct; prefix an entry with ! to make it case-sensitive.",
       "type": "array",
+      "items": { "type": "string" },
       "default": [],
-      "description": "List words that are considered correct even if they do not appear in any other dictionary. Words with capitals or ones that start with `!` are case-sensitive.",
       "order": 7
     },
     "addKnownWords": {
+      "title": "Offer Known Word Actions",
+      "description": "Include an action that adds the selected word to Known Words.",
       "type": "boolean",
       "default": false,
-      "description": "If checked, then the suggestions will include options to add to the known words list above.",
       "order": 8
     },
     "noticesMode": {
+      "title": "Dictionary Notices",
+      "description": "Choose where dictionary loading messages are displayed.",
       "type": "string",
       "default": "both",
-      "description": "Choose where loading errors and other notices are displayed: popup, console, or both.",
-      "order": 9,
       "enum": [
-        {
-          "value": "both",
-          "description": "Display notices in popups and in the console"
-        },
-        {
-          "value": "popup",
-          "description": "Display notices only in popups"
-        },
-        {
-          "value": "console",
-          "description": "Display notices only on the console"
-        }
-      ]
+        { "value": "both", "description": "Popup and console" },
+        { "value": "popup", "description": "Popup only" },
+        { "value": "console", "description": "Console only" }
+      ],
+      "order": 9
     },
     "enableDebug": {
+      "title": "Debug Logging",
+      "description": "Write detailed checker diagnostics to the developer console.",
       "type": "boolean",
       "default": false,
-      "title": "Enable debug information for spell check",
       "order": 10
     }
   },
   "consumedServices": {
-    "spell-check": {
-      "versions": {
-        "^1.0.0": "consumeSpellCheckers"
-      }
-    }
+    "spell-check": { "versions": { "^1.0.0": "consumeSpellCheckers" } }
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "npm run format",
-      "pre-push": "npm run format"
-    }
+  "dependencies": {
+    "@lumine-code/spellchecker": "https://github.com/lumine-code/node-spellchecker/archive/cef7034ce49d66ecbbb5a0fd9f9f878e415d237e.tar.gz",
+    "debug": "^4.4.3",
+    "multi-integer-range": "^2.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.8.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-n": "^18.2.2",
+    "globals": "^17.9.0",
+    "prettier": "^3.9.6"
   }
 }
