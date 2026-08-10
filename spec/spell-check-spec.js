@@ -1,4 +1,3 @@
-const { waitFor } = require("./async-spec-helpers");
 const path = require("node:path");
 const { scopeDescriptorMatchesSelector } = require("../lib/scope-helper");
 const SpellCheckTask = require("../lib/spell-check-task");
@@ -36,7 +35,7 @@ describe("spell-check", () => {
   it("marks misspellings and leaves correctly spelled words alone", async () => {
     editor.setText("This sentence has thiss misspelling.");
     await refresh();
-    await waitFor(() => markedWords().includes("thiss"));
+    await conditionPromise(() => markedWords().includes("thiss"));
 
     expect(markedWords()).toEqual(["thiss"]);
   });
@@ -67,7 +66,7 @@ describe("spell-check", () => {
     lumine.config.set("spell-check.knownWords", ["thiss"]);
     editor.setText("thiss");
     await refresh();
-    await waitFor(() => markers().length === 0);
+    await conditionPromise(() => markers().length === 0);
 
     expect(markers().length).toBe(0);
   });
@@ -75,7 +74,7 @@ describe("spell-check", () => {
   it("toggles checking for the active editor", async () => {
     editor.setText("thiss");
     await refresh();
-    await waitFor(() => markedWords().includes("thiss"));
+    await conditionPromise(() => markedWords().includes("thiss"));
     lumine.commands.dispatch(lumine.views.getView(lumine.workspace), "spell-check:toggle");
 
     expect(markers().length).toBe(0);

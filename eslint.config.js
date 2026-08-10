@@ -31,9 +31,13 @@ module.exports = [
     languageOptions: {
       globals: {
         ...globals.jasmine,
-        waitsForPromise: "readonly",
-        runs: "readonly",
         advanceClock: "readonly",
+        // Waiting primitives injected onto `window` by the editor's spec harness.
+        conditionPromise: "readonly",
+        emitterEventPromise: "readonly",
+        flushMicrotasks: "readonly",
+        timeoutPromise: "readonly",
+        waitForFrames: "readonly",
       },
     },
     rules: {
