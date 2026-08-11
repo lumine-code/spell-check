@@ -1,15 +1,15 @@
 const path = require("node:path");
 const { scopeDescriptorMatchesSelector } = require("../lib/scope-helper");
-const SpellCheckTask = require("../lib/spell-check-task");
 
 describe("spell-check", () => {
   let editor;
   let main;
+  let linter;
 
-  const markers = () => main.misspellingMarkersForEditor(editor);
-  const markedWords = () =>
-    markers().map((marker) => editor.getTextInBufferRange(marker.getBufferRange()));
-  const refresh = () => main.viewsByEditor.get(editor).updateMisspellings();
+  // What the linter would be told, and the words those messages cover.
+  const lint = () => linter.lint(editor);
+  const wordsIn = (messages) =>
+    messages.map((message) => editor.getTextInBufferRange(message.location.position));
 
   beforeEach(async () => {
     lumine.config.set("spell-check.grammars", ["source.js"]);
@@ -19,12 +19,18 @@ describe("spell-check", () => {
     lumine.config.set("spell-check.locales", ["en-US"]);
     lumine.config.set("spell-check.knownWords", []);
     lumine.config.set("spell-check.addKnownWords", false);
+    lumine.config.set("spell-check.severity", "error");
 
     await lumine.packages.activatePackage("language-javascript");
+    // `spell-check:correct-misspelling` is registered on the workspace and
+    // resolved from the dispatch target, so a dispatch aimed at an editor has to
+    // be able to reach the workspace element through the document.
+    jasmine.attachToDOM(lumine.views.getView(lumine.workspace));
     editor = await lumine.workspace.open();
     editor.setGrammar(lumine.grammars.grammarForScopeName("source.js"));
     const pack = await lumine.packages.activatePackage("spell-check");
     main = pack.mainModule;
+    linter = main.provideLinter();
   });
 
   afterEach(async () => {
@@ -32,52 +38,227 @@ describe("spell-check", () => {
     editor.destroy();
   });
 
-  it("marks misspellings and leaves correctly spelled words alone", async () => {
-    editor.setText("This sentence has thiss misspelling.");
-    await refresh();
-    await conditionPromise(() => markedWords().includes("thiss"));
+  describe("the linter it provides", () => {
+    it("describes itself the way the service requires", () => {
+      expect(linter.name).toBe("Spell Check");
+      expect(linter.scope).toBe("file");
+      expect(linter.lintsOnChange).toBe(true);
+      // Every editor arrives, because the `grammars` setting understands
+      // descendant scopes that `grammarScopes` cannot express.
+      expect(linter.grammarScopes).toEqual(["*"]);
+    });
 
-    expect(markedWords()).toEqual(["thiss"]);
+    it("reports a misspelling and leaves correctly spelled words alone", async () => {
+      editor.setText("This sentence has thiss misspelling");
+
+      const messages = await lint();
+
+      expect(wordsIn(messages)).toEqual(["thiss"]);
+      expect(messages[0].severity).toBe("error");
+      expect(messages[0].excerpt).toBe("thiss is not in the dictionary");
+    });
+
+    it("reports the severity the setting asks for", async () => {
+      lumine.config.set("spell-check.severity", "hint");
+      editor.setText("thiss");
+
+      expect((await lint())[0].severity).toBe("hint");
+    });
+
+    it("locates a message by path once the buffer has one", async () => {
+      const filePath = path.join(__dirname, "fixtures", "service-checker.js");
+      editor.getBuffer().setPath(filePath);
+      editor.setText("thiss");
+
+      expect((await lint())[0].location.file).toBe(filePath);
+    });
+
+    // A buffer that has never been saved has no path, so the message names the
+    // buffer. Untitled buffers are in the default grammar list, so this is the
+    // ordinary case rather than an edge one.
+    it("locates a message by buffer while the buffer has no path", async () => {
+      editor.setText("thiss");
+
+      const [message] = await lint();
+      expect(message.location.file).toBeUndefined();
+      expect(message.location.buffer).toBe(editor.getBuffer());
+    });
+
+    it("clears its messages for a grammar that is not checked", async () => {
+      lumine.config.set("spell-check.grammars", ["text.plain"]);
+      editor.setText("thiss");
+
+      expect(await lint()).toEqual([]);
+    });
+
+    it("honors the known-word list", async () => {
+      lumine.config.set("spell-check.knownWords", ["thiss"]);
+      editor.setText("thiss");
+
+      expect(await lint()).toEqual([]);
+    });
+
+    it("clears its messages for an editor checking has been toggled off in", async () => {
+      editor.setText("thiss");
+      expect((await lint()).length).toBe(1);
+
+      lumine.commands.dispatch(lumine.views.getView(lumine.workspace), "spell-check:toggle");
+
+      expect(await lint()).toEqual([]);
+    });
+
+    it("reports again once checking is toggled back on", async () => {
+      editor.setText("thiss");
+      const workspace = lumine.views.getView(lumine.workspace);
+      lumine.commands.dispatch(workspace, "spell-check:toggle");
+      expect(await lint()).toEqual([]);
+
+      lumine.commands.dispatch(workspace, "spell-check:toggle");
+
+      expect((await lint()).length).toBe(1);
+    });
   });
 
-  it("drops stale asynchronous results after rapid edits", async () => {
-    let text = "first";
-    const callbacks = [];
-    const fakeEditor = {
-      id: 1,
-      isDestroyed: () => false,
-      getBuffer: () => ({ getPath: () => null, getText: () => text }),
-    };
-    const manager = {
-      check: async (_args, checkedText) => ({
-        misspellings: [checkedText],
-      }),
-    };
-    const task = new SpellCheckTask(manager);
-    const first = task.start(fakeEditor, (result) => callbacks.push(result));
-    text = "second";
-    const second = task.start(fakeEditor, (result) => callbacks.push(result));
-    await Promise.all([first, second]);
+  describe("scope filtering", () => {
+    // Scope filtering can only work once the grammar has tokenized, and which
+    // engine backs `source.js` is not this spec's business. Wait until the
+    // editor actually reports a comment scope where we put one.
+    const commentIsTokenized = (position) =>
+      conditionPromise(() =>
+        editor
+          .scopeDescriptorForBufferPosition(position)
+          .getScopesArray()
+          .some((scope) => scope.startsWith("comment")),
+      );
 
-    expect(callbacks).toEqual([["second"]]);
+    it("skips a misspelling whose scope is excluded", async () => {
+      lumine.config.set("spell-check.excludedScopes", ["comment"]);
+      editor.setText("// thiss");
+      await commentIsTokenized([0, 3]);
+
+      expect(await lint()).toEqual([]);
+    });
+
+    it("reports the same misspelling once nothing excludes its scope", async () => {
+      editor.setText("// thiss");
+      await commentIsTokenized([0, 3]);
+
+      expect(wordsIn(await lint())).toEqual(["thiss"]);
+    });
+
+    it("checks only the named descendant scope when the setting names one", async () => {
+      lumine.config.set("spell-check.grammars", ["source.js comment"]);
+      editor.setText("// thiss\nthatt();");
+      await commentIsTokenized([0, 3]);
+
+      const messages = await lint();
+      expect(wordsIn(messages)).toEqual(["thiss"]);
+      // A raw range pair, not a `Range`: normalizing these into the editor's
+      // types is the linter's job, not the provider's.
+      expect(messages[0].location.position[0][0]).toBe(0);
+    });
+
+    it("does not resolve scope descriptors when nothing narrows the buffer", async () => {
+      spyOn(editor, "scopeDescriptorForBufferPosition").and.callThrough();
+      editor.setText("thiss and thatt");
+
+      expect((await lint()).length).toBe(2);
+      // Every checked grammar is a bare root scope and nothing is excluded, so
+      // no descriptor can change the outcome and none should be asked for.
+      expect(editor.scopeDescriptorForBufferPosition).not.toHaveBeenCalled();
+    });
+
+    it("resolves scope descriptors once something does narrow the buffer", async () => {
+      lumine.config.set("spell-check.excludedScopes", ["comment"]);
+      spyOn(editor, "scopeDescriptorForBufferPosition").and.callThrough();
+      editor.setText("thiss and thatt");
+
+      await lint();
+
+      expect(editor.scopeDescriptorForBufferPosition).toHaveBeenCalled();
+    });
   });
 
-  it("honors the known-word list alongside locale dictionaries", async () => {
-    lumine.config.set("spell-check.knownWords", ["thiss"]);
-    editor.setText("thiss");
-    await refresh();
-    await conditionPromise(() => markers().length === 0);
+  describe("the corrections", () => {
+    let intentions;
 
-    expect(markers().length).toBe(0);
-  });
+    beforeEach(() => {
+      intentions = main.provideIntentionsList();
+    });
 
-  it("toggles checking for the active editor", async () => {
-    editor.setText("thiss");
-    await refresh();
-    await conditionPromise(() => markedWords().includes("thiss"));
-    lumine.commands.dispatch(lumine.views.getView(lumine.workspace), "spell-check:toggle");
+    const intentionsAt = (bufferPosition) =>
+      intentions.getIntentions({ textEditor: editor, bufferPosition });
 
-    expect(markers().length).toBe(0);
+    it("offers the dictionary's suggestions at a misspelling", async () => {
+      editor.setText("thiss");
+      await lint();
+
+      const offered = await intentionsAt([0, 2]);
+      expect(offered.length).toBeGreaterThan(0);
+      expect(offered.map((intention) => intention.title)).toContain("this");
+    });
+
+    it("offers nothing away from a misspelling", async () => {
+      editor.setText("correct thiss");
+      await lint();
+
+      expect(await intentionsAt([0, 2])).toEqual([]);
+    });
+
+    it("offers nothing before anything has been checked", async () => {
+      editor.setText("thiss");
+
+      expect(await intentionsAt([0, 2])).toEqual([]);
+    });
+
+    it("applies the correction it is asked for", async () => {
+      editor.setText("thiss");
+      await lint();
+      const offered = await intentionsAt([0, 2]);
+      const correction = offered.find((intention) => intention.title === "this");
+
+      await correction.selected();
+
+      expect(editor.getText()).toBe("this");
+    });
+
+    it("offers the known-word action when the setting allows it", async () => {
+      // Changing the setting rebuilds the known-words checker, which is where
+      // the action comes from.
+      lumine.config.set("spell-check.addKnownWords", true);
+      editor.setText("thiss");
+      await lint();
+
+      const offered = await intentionsAt([0, 2]);
+
+      expect(offered.map((intention) => intention.title)).toContain("Add to Known Words");
+    });
+
+    // The same set on a dedicated keystroke, for a user who has `linter` but not
+    // `intentions` installed.
+    it("lists the same corrections from the command", async () => {
+      editor.setText("thiss");
+      await lint();
+
+      lumine.commands.dispatch(lumine.views.getView(editor), "spell-check:correct-misspelling");
+
+      const view = main.correctionsView;
+      expect(view).not.toBeNull();
+      expect(view.corrections.map((correction) => correction.label)).toContain("this");
+
+      view.confirm();
+      expect(editor.getText()).toBe("this");
+    });
+
+    it("opens nothing from the command away from a misspelling", async () => {
+      editor.setText("correct");
+      await lint();
+      main.correctionsView = null;
+
+      lumine.commands.dispatch(lumine.views.getView(editor), "spell-check:correct-misspelling");
+
+      expect(main.correctionsView).toBeNull();
+    });
   });
 
   it("removes service checkers when their registration is disposed", () => {
@@ -96,112 +277,6 @@ describe("spell-check", () => {
 
     expect(main.instance.checkers).not.toContain(checker);
     expect(checker.deactivated).toBe(true);
-  });
-
-  describe("scope filtering", () => {
-    const view = () => main.viewsByEditor.get(editor);
-
-    // Scope filtering can only work once the grammar has tokenized, and which
-    // engine backs `source.js` is not this spec's business. Wait until the
-    // editor actually reports a comment scope where we put one.
-    const commentIsTokenized = (position) =>
-      conditionPromise(() =>
-        editor
-          .scopeDescriptorForBufferPosition(position)
-          .getScopesArray()
-          .some((scope) => scope.startsWith("comment")),
-      );
-
-    it("skips a misspelling whose scope is excluded", async () => {
-      lumine.config.set("spell-check.excludedScopes", ["comment"]);
-      editor.setText("// thiss");
-      await commentIsTokenized([0, 3]);
-      await refresh();
-
-      expect(markers().length).toBe(0);
-    });
-
-    it("marks the same misspelling once nothing excludes its scope", async () => {
-      editor.setText("// thiss");
-      await commentIsTokenized([0, 3]);
-      await refresh();
-      await conditionPromise(() => markers().length === 1);
-
-      expect(markedWords()).toEqual(["thiss"]);
-    });
-
-    it("checks only the named descendant scope when the setting names one", async () => {
-      lumine.config.set("spell-check.grammars", ["source.js comment"]);
-      editor.setText("// thiss\nthatt();");
-      await commentIsTokenized([0, 3]);
-      await refresh();
-      await conditionPromise(() => markers().length > 0);
-
-      expect(markedWords()).toEqual(["thiss"]);
-      expect(markers()[0].getBufferRange().start.row).toBe(0);
-    });
-
-    it("does not resolve scope descriptors when nothing narrows the buffer", async () => {
-      spyOn(editor, "scopeDescriptorForBufferPosition").and.callThrough();
-      editor.setText("thiss and thatt");
-      await refresh();
-      await conditionPromise(() => markers().length === 2);
-
-      // Every checked grammar is a bare root scope and nothing is excluded, so
-      // no descriptor can change the outcome and none should be asked for.
-      expect(editor.scopeDescriptorForBufferPosition).not.toHaveBeenCalled();
-    });
-
-    it("resolves scope descriptors once something does narrow the buffer", async () => {
-      lumine.config.set("spell-check.excludedScopes", ["comment"]);
-      spyOn(editor, "scopeDescriptorForBufferPosition").and.callThrough();
-      editor.setText("thiss and thatt");
-      await refresh();
-      await conditionPromise(() => markers().length === 2);
-
-      expect(editor.scopeDescriptorForBufferPosition).toHaveBeenCalled();
-    });
-
-    it("keeps the same marker layer across updates", async () => {
-      editor.setText("thiss");
-      await refresh();
-      await conditionPromise(() => markers().length === 1);
-      const layer = view().markerLayer;
-
-      editor.setText("thiss thatt");
-      await refresh();
-      await conditionPromise(() => markers().length === 2);
-
-      expect(view().markerLayer).toBe(layer);
-      expect(layer.isDestroyed()).toBe(false);
-    });
-  });
-
-  it("leaves a toggled-off editor alone when the font size changes", async () => {
-    editor.setText("thiss");
-    await refresh();
-    await conditionPromise(() => markedWords().includes("thiss"));
-    lumine.commands.dispatch(lumine.views.getView(lumine.workspace), "spell-check:toggle");
-
-    expect(markers().length).toBe(0);
-
-    lumine.config.set("editor.fontSize", lumine.config.get("editor.fontSize") + 2);
-    await refresh();
-
-    expect(markers().length).toBe(0);
-  });
-
-  it("stops listening for context menus once the view is destroyed", () => {
-    const view = main.viewsByEditor.get(editor);
-    const element = lumine.views.getView(editor);
-    spyOn(element, "removeEventListener").and.callThrough();
-
-    view.destroy();
-
-    expect(element.removeEventListener).toHaveBeenCalledWith(
-      "contextmenu",
-      view.addContextMenuEntries,
-    );
   });
 
   it("matches ordered descendant scopes and comma-separated alternatives", () => {

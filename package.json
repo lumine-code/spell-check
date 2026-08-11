@@ -2,7 +2,7 @@
   "name": "spell-check",
   "author": "lumine-code",
   "version": "1.0.0",
-  "description": "Highlight misspelled words and offer contextual corrections.",
+  "description": "Report misspelled words as linter diagnostics with contextual corrections.",
   "keywords": ["dictionary", "grammar", "proofreading", "writing", "language"],
   "repository": "https://github.com/lumine-code/spell-check",
   "bugs": { "url": "https://github.com/lumine-code/spell-check/issues" },
@@ -21,6 +21,13 @@
     "format:check": "prettier --check ."
   },
   "configSchema": {
+    "severity": {
+      "title": "Severity",
+      "description": "Severity reported for a misspelling. Error is the tier that renders the red underline spelling conventionally uses; hint is the quiet one, with no gutter dot and no status-bar tile until something is found.",
+      "type": "string",
+      "enum": ["error", "warning", "info", "hint"],
+      "default": "error"
+    },
     "grammars": {
       "title": "Checked Grammars",
       "description": "Root scopes or detailed scope selectors that should be checked.",
@@ -91,6 +98,10 @@
       "type": "boolean",
       "default": false
     }
+  },
+  "providedServices": {
+    "linter.provider": { "versions": { "1.0.0": "provideLinter" } },
+    "intentions.list": { "versions": { "1.0.0": "provideIntentionsList" } }
   },
   "consumedServices": {
     "spell-check": { "versions": { "^1.0.0": "consumeSpellCheckers" } }

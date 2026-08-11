@@ -1,7 +1,3 @@
-.spell-check-misspelling .region {
-  border-bottom: 2px dotted var(--color-error, hsl(0deg 80% 60%));
-}
-
 .spell-check-corrections {
   width: 25em;
   max-height: 20em;
