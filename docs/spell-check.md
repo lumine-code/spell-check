@@ -66,7 +66,15 @@ module.exports = {
 
 ## Behavior
 
-The hub asks every enabled checker for spelling ranges. A range confirmed as correct overrides an incorrect range, while suggestions are merged by checker priority and deduplicated.
+The hub asks every enabled checker for spelling ranges and composes the answers in this order:
+
+1. A word is a misspelling only where **every** checker that reported `incorrect` reported it. One dictionary recognising a word is enough to clear it.
+2. A `correct` range clears a word the dictionaries flagged. This is how a positive-only provider such as Known Words works.
+3. `invertIncorrectAsCorrect` declares that everything the checker did not flag is correct — rule 1 already says exactly that, so the flag needs no separate set. A checker that sets it should not also send a `correct` array; the hub ignores one if it arrives.
+
+Ranges are inclusive at both ends, and two that sit a single character apart are treated as one. The hub splits such a run back into separate misspellings on whitespace, so three flagged words in a row mark as three.
+
+Suggestions are merged by checker priority and deduplicated.
 
 ## Teardown
 
