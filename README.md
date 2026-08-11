@@ -45,12 +45,10 @@ ignores it and checks whatever is selected — a docstring or a comment block in
 setting does not cover, without turning checking on for that whole language. Those results are
 reported separately and stay put until the command is run again, cleared, or the words are edited.
 
-**Checked Editors** decides where. By default only the documents open in the workspace centre: a
-package builds editors of its own to render things with — a diff, a patch preview, a commit box in a
-dock, the field inside a picker — and none of them carries a grammar, so the plain-text entry in
-**Checked Grammars** would otherwise reach every one of them and underline the command palette in
-red. A buffer nobody has saved yet still counts: it is a document, it simply has no path. Set it to
-`all` to check every editor there is.
+Where checking happens is the linter's decision, not this package's: only documents are linted — the
+pane items open in the workspace, saved or not, plus any editor its owner registered through the
+`linter.editors` service, such as a commit message box. A diff view, a patch preview or the field
+inside a picker is never checked; none of them is a document.
 
 ## Customization
 

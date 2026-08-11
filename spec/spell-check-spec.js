@@ -20,7 +20,6 @@ describe("spell-check", () => {
     lumine.config.set("spell-check.knownWords", []);
     lumine.config.set("spell-check.addKnownWords", false);
     lumine.config.set("spell-check.severity", "error");
-    lumine.config.set("spell-check.editors", "center");
 
     await lumine.packages.activatePackage("language-javascript");
     // `spell-check:correct-misspelling` is registered on the workspace and
@@ -120,31 +119,16 @@ describe("spell-check", () => {
     });
   });
 
-  // A diff view, a patch preview, a commit box in a dock, the field inside a
-  // picker: all real editors, none of them carrying a grammar, so the plain-text
-  // entry in `grammars` matched every one and the command palette came up
-  // underlined in red. Declaring the target set is what keeps them out, and the
-  // linter is what enforces it.
+  // Which editors are checked at all is the linter's question now — documents
+  // only, plus whatever a package registered through `linter.editors` — so the
+  // provider declares nothing about it.
   describe("which editors it asks for", () => {
-    it("asks only for the documents the centre holds by default", () => {
-      expect(lumine.config.get("spell-check.editors")).toBe("center");
-      expect(linter.editors).toBe("center");
+    it("declares no editor target of its own", () => {
+      expect("editors" in linter).toBe(false);
     });
 
-    // Read on every run, so the setting takes effect without the provider being
-    // registered again.
-    it("widens to every editor when the setting says so", () => {
-      lumine.config.set("spell-check.editors", "all");
-
-      expect(linter.editors).toBe("any");
-
-      lumine.config.set("spell-check.editors", "center");
-
-      expect(linter.editors).toBe("center");
-    });
-
-    // A buffer nobody has saved yet is still one of those documents, which is why
-    // narrowing the set does not cost the untitled case.
+    // A buffer nobody has saved yet is still a document, which is why the
+    // narrowed default does not cost the untitled case.
     it("still reports for an editor with no path", async () => {
       editor.setText("documnet");
 
