@@ -461,47 +461,112 @@ describe("spell-check", () => {
       expect(offered.map((intention) => intention.title)).toContain("Add to Known Words");
     });
 
-    // The same set on a dedicated keystroke, for a user who has `linter` but not
-    // `intentions` installed.
-    it("lists the same corrections from the command", async () => {
+    // The command opens the autocomplete menu, which this package supplies the
+    // corrections to. There is no picker of our own any more.
+    it("opens the autocomplete menu from the command", async () => {
       editor.setText("thiss");
       await lint();
+      const dispatched = [];
+      spyOn(lumine.commands, "dispatch").and.callFake((target, name, detail) => {
+        dispatched.push({ name, detail });
+      });
 
-      lumine.commands.dispatch(lumine.views.getView(editor), "spell-check:correct-misspelling");
+      main.correctMisspelling({ target: lumine.views.getView(editor) });
 
-      const view = main.correctionsView;
-      expect(view).not.toBeNull();
-      expect(view.corrections.map((correction) => correction.label)).toContain("this");
-
-      view.confirm();
-      expect(editor.getText()).toBe("this");
-    });
-
-    // The editor's popover styling keys on `.select-list.popover-list` and its
-    // row styling on `ol.list-group`; a list missing any of the three renders
-    // as a transparent <ol> over the buffer text.
-    it("builds the overlay out of the classes the editor styles", async () => {
-      editor.setText("thiss");
-      await lint();
-
-      lumine.commands.dispatch(lumine.views.getView(editor), "spell-check:correct-misspelling");
-
-      const element = main.correctionsView.element;
-      expect(element.classList.contains("select-list")).toBe(true);
-      expect(element.classList.contains("popover-list")).toBe(true);
-      expect(element.querySelector("ol.list-group")).not.toBeNull();
-
-      main.correctionsView.destroy();
+      expect(dispatched).toEqual([
+        { name: "autocomplete:activate", detail: { activatedManually: true } },
+      ]);
     });
 
     it("opens nothing from the command away from a misspelling", async () => {
       editor.setText("correct");
       await lint();
-      main.correctionsView = null;
+      const dispatched = [];
+      spyOn(lumine.commands, "dispatch").and.callFake((target, name) => dispatched.push(name));
 
-      lumine.commands.dispatch(lumine.views.getView(editor), "spell-check:correct-misspelling");
+      main.correctMisspelling({ target: lumine.views.getView(editor) });
 
-      expect(main.correctionsView).toBeNull();
+      expect(dispatched).toEqual([]);
+    });
+  });
+
+  // The corrections are autocomplete suggestions: one list in the editor, and
+  // no picker of this package's own. Three fields carry the whole contract —
+  // `ranges` for the geometry, the priorities for the ordering, and
+  // `activatedManually` for when they appear at all.
+  describe("the autocomplete provider", () => {
+    let provider;
+
+    beforeEach(() => {
+      provider = main.provideAutocomplete();
+    });
+
+    const suggestionsAt = (bufferPosition, overrides = {}) =>
+      provider.getSuggestions({
+        editor,
+        bufferPosition,
+        activatedManually: true,
+        ...overrides,
+      });
+
+    it("declares itself above the buffer's own words", () => {
+      expect(provider.scopeSelector).toBe("*");
+      expect(provider.inclusionPriority).toBe(100);
+      expect(provider.suggestionPriority).toBe(100);
+      // What the user typed says nothing about which correction applies.
+      expect(provider.filterSuggestions).toBe(false);
+    });
+
+    it("replaces the whole misspelling through `ranges`", async () => {
+      editor.setText("thiss");
+      await lint();
+
+      const suggestions = await suggestionsAt([0, 2]);
+
+      expect(suggestions.map((suggestion) => suggestion.text)).toContain("this");
+      const [first] = suggestions;
+      // The cursor sits mid-word, so a prefix-based insertion would mangle it;
+      // the range covers the misspelling however the menu was reached.
+      expect(first.ranges.length).toBe(1);
+      expect(first.ranges[0].serialize()).toEqual([
+        [0, 0],
+        [0, 5],
+      ]);
+    });
+
+    // Typing a word raises the same `triggerKind` as asking for the menu, so
+    // this flag is the only thing that separates them. Without it every prose
+    // keystroke would offer corrections.
+    it("offers nothing when the menu was not asked for", async () => {
+      editor.setText("thiss");
+      await lint();
+
+      expect(await suggestionsAt([0, 2], { activatedManually: false })).toEqual([]);
+    });
+
+    it("offers nothing away from a misspelling", async () => {
+      editor.setText("correct thiss");
+      await lint();
+
+      expect(await suggestionsAt([0, 2])).toEqual([]);
+    });
+
+    // A suggestion inserts text. Adding a word to the dictionary changes a
+    // setting instead, so it is a command rather than a menu row that would
+    // have to insert the word it already found there.
+    it("leaves the known-word action out of the menu and does it by command", async () => {
+      lumine.config.set("spell-check.addKnownWords", true);
+      editor.setText("thiss");
+      await lint();
+
+      const suggestions = await suggestionsAt([0, 2]);
+      expect(suggestions.map((suggestion) => suggestion.text)).not.toContain("Add to Known Words");
+      expect(suggestions.every((suggestion) => suggestion.ranges)).toBe(true);
+
+      editor.setCursorBufferPosition([0, 2]);
+      lumine.commands.dispatch(lumine.views.getView(editor), "spell-check:add-known-word");
+
+      expect(lumine.config.get("spell-check.knownWords")).toContain("thiss");
     });
   });
 

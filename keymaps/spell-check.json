@@ -1,15 +1,10 @@
 {
+  // The corrections are autocomplete suggestions, so its own keymap moves
+  // through the list and confirms — there is no list of ours to bind.
   ".platform-darwin lumine-text-editor": {
     "cmd-:": "spell-check:correct-misspelling"
   },
   ".platform-win32 lumine-text-editor, .platform-linux lumine-text-editor": {
     "ctrl-:": "spell-check:correct-misspelling"
-  },
-  ".spell-check-corrections": {
-    "up": "core:move-up",
-    "down": "core:move-down",
-    "enter": "core:confirm",
-    "tab": "core:confirm",
-    "escape": "core:cancel"
   }
 }

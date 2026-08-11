@@ -12,7 +12,7 @@ nothing is shown** — spell-check has no surfaces of its own.
 - **Native checking**: uses system spelling services where supported and Hunspell dictionaries everywhere.
 - **Scoped proofreading**: checks entire grammars or selected descendant scopes and respects exclusions.
 - **Diagnostics**: reports each misspelling to the linter, so the panel, the navigation commands and the overview layer all cover spelling.
-- **Code actions**: offers the dictionary's suggestions at the cursor, through the `intentions` package or a keystroke of its own.
+- **Corrections**: offers the dictionary's suggestions in the autocomplete menu and as code actions, drawing no list of its own.
 - **Unsaved buffers**: checks a buffer that has never been saved, not only files on disk.
 - **Known words**: keeps a configurable case-sensitive or case-insensitive personal word list.
 - **Checker services**: combines optional spelling providers with the built-in native and locale checkers.
@@ -27,6 +27,7 @@ Commands available in `lumine-workspace`:
 
 - `spell-check:toggle`: enable or disable checking in the active editor,
 - `spell-check:correct-misspelling`: show corrections for the misspelling under the cursor,
+- `spell-check:add-known-word`: add the misspelling under the cursor to Known Words,
 - `spell-check:check-selected`: check the selected text, whatever the grammar,
 - `spell-check:clear-checked-selection`: drop the results of the last checked selection.
 
@@ -36,9 +37,16 @@ A misspelling is reported as an error by default, which is the severity that ren
 underline spelling conventionally uses. Set **Severity** to `hint` for the quiet tier instead: no
 gutter dot, and no status-bar tile until something is found.
 
-Corrections are code actions. With the `intentions` package installed they appear in its menu
-alongside a language server's own fixes; the `spell-check:correct-misspelling` keystroke lists the
-same set without it.
+Corrections are autocomplete suggestions. `spell-check:correct-misspelling` opens the autocomplete
+menu on the misspelling under the cursor and the corrections are at the top of it; picking one
+replaces the whole word, wherever inside it the cursor happened to be. A misspelling with exactly
+one correction is simply fixed, since the menu confirms a lone suggestion without opening. They do
+not appear while typing — only when the menu is asked for. With the `intentions` package installed
+the same set is in its code-action menu too, beside a language server's own fixes.
+
+`spell-check:add-known-word` is a command rather than a menu row, because adding a word to the
+dictionary changes a setting instead of replacing text. It needs **Offer Known Word Actions**
+enabled.
 
 **Checked Grammars** decides which files are checked as you type. `spell-check:check-selected`
 ignores it and checks whatever is selected — a docstring or a comment block in a source file the
@@ -69,6 +77,7 @@ stand out from other diagnostics of the same severity, target the excerpt in you
 
 - **[spell-check](docs/spell-check.md)** (`^1.0.0`): consumed to combine external checker modules with the built-in checkers.
 - **linter.provider** (`1.0.0`): provided to report each misspelling as a diagnostic.
+- **autocomplete.provider** (`1.0.0`): provided to offer the corrections in the autocomplete menu, above the buffer's own words.
 - **intentions.list** (`1.0.0`): provided to offer the corrections as code actions at the cursor.
 - **linter.registry** (`^1.0.0`): consumed to publish a checked selection's results, which persist until they are replaced.
 

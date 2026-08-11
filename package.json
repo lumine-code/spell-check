@@ -8,7 +8,7 @@
   "bugs": { "url": "https://github.com/lumine-code/spell-check/issues" },
   "license": "MIT",
   "main": "./lib/main",
-  "files": ["docs", "keymaps", "lib", "menus", "spec", "styles"],
+  "files": ["docs", "keymaps", "lib", "menus", "spec"],
   "engines": { "lumine": "^1.0.0" },
   "backgroundTips": [
     "You can open spelling corrections for the word under the cursor with {{ 'spell-check:correct-misspelling' | keystroke }}",
@@ -101,6 +101,7 @@
   },
   "providedServices": {
     "linter.provider": { "versions": { "1.0.0": "provideLinter" } },
+    "autocomplete.provider": { "versions": { "1.0.0": "provideAutocomplete" } },
     "intentions.list": { "versions": { "1.0.0": "provideIntentionsList" } }
   },
   "consumedServices": {

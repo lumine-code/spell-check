@@ -6,6 +6,8 @@
         {
           "label": "Spell Check",
           "submenu": [
+            { "label": "Correct Spelling", "command": "spell-check:correct-misspelling" },
+            { "label": "Add to Known Words", "command": "spell-check:add-known-word" },
             { "label": "Check Selected", "command": "spell-check:check-selected" },
             {
               "label": "Clear Checked Selection",
