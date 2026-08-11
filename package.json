@@ -96,7 +96,7 @@
     "spell-check": { "versions": { "^1.0.0": "consumeSpellCheckers" } }
   },
   "dependencies": {
-    "@lumine-code/spellchecker": "https://github.com/lumine-code/node-spellchecker/archive/cef7034ce49d66ecbbb5a0fd9f9f878e415d237e.tar.gz",
+    "@lumine-code/spellchecker": "https://github.com/lumine-code/node-spellchecker/archive/d67b3f90acbabb0489e9212ed111e89f8c1edc47.tar.gz",
     "debug": "^4.4.3",
     "multi-integer-range": "^2.0.0"
   },
