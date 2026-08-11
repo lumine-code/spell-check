@@ -75,6 +75,32 @@ describe("spell checkers", () => {
       expect(checker.source).toBe("system");
       expect(checker.isEnabled()).toBe(true);
     });
+
+    it("refuses a large buffer on the system service instead of wedging the queue", async () => {
+      // The service costs about 13ms per kilobyte however the text is divided,
+      // so a megabyte is half a minute of checking that the consumer's timeout
+      // then throws away. Refusal means "no answer", not "no misspellings".
+      spyOn(env, "isWindows").and.returnValue(true);
+      spyOn(spellchecker, "getDictionaryPath").and.returnValue("/no/such/place");
+      const checker = new LocaleChecker("pl-PL", [], false, false);
+      checker.deferredInit();
+      expect(checker.source).toBe("system");
+      const checked = [];
+      checker.spellchecker.checkSpellingAsync = (text) => {
+        checked.push(text.length);
+        return Promise.resolve([]);
+      };
+
+      const result = await checker.check({}, "x".repeat(1024 * 1024));
+
+      expect(result.incorrect).toBeUndefined();
+      expect(result.status).toContain("pl-PL");
+      expect(checked).toEqual([]);
+
+      // A buffer within the limit is still checked.
+      await checker.check({}, "small enough");
+      expect(checked).toEqual(["small enough".length]);
+    });
   });
 
   it("does not offer the operating system's service for whole-buffer checks on Windows", () => {
