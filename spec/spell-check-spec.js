@@ -360,6 +360,52 @@ describe("spell-check", () => {
     });
   });
 
+  // Code is not prose. The default Excluded Scopes keep it out of the check:
+  // fenced and indented blocks and the fence's own info string, inline spans,
+  // and embedded source regions, whatever language the fence names.
+  describe("code inside a prose grammar", () => {
+    beforeEach(async () => {
+      await lumine.packages.activatePackage("language-gfm");
+      lumine.config.set("spell-check.grammars", ["source.gfm"]);
+      lumine.config.set(
+        "spell-check.excludedScopes",
+        require("../package.json").configSchema.excludedScopes.default,
+      );
+      editor.setGrammar(lumine.grammars.grammarForScopeName("source.gfm"));
+      await editor.getBuffer().getLanguageMode().ready;
+    });
+
+    it("ships defaults that exclude code", () => {
+      expect(require("../package.json").configSchema.excludedScopes.default).toEqual([
+        "markup.raw",
+        "markup.code",
+        "meta.embedded",
+      ]);
+    });
+
+    it("reports prose misspellings and leaves every kind of code alone", async () => {
+      editor.setText(
+        "# One heddingmistak\n" +
+          "\n" +
+          "Prose with a prosemistak and `inlinemistak` span.\n" +
+          "\n" +
+          "```js\n" +
+          "const fencedmistak = 1;\n" +
+          "```\n" +
+          "\n" +
+          "    indentedmistak block\n",
+      );
+      // The inline span's scopes come from an injected grammar, so wait until
+      // they are actually in the tree before asking for messages.
+      await conditionPromise(() => {
+        const scopes = editor.scopeDescriptorForBufferPosition([2, 32]).getScopesArray();
+        return scopes.some((scope) => /markup\.raw|meta\.embedded/.test(scope));
+      });
+
+      expect(wordsIn(await lint())).toEqual(["heddingmistak", "prosemistak"]);
+    });
+  });
+
   describe("the corrections", () => {
     let intentions;
 
@@ -429,6 +475,23 @@ describe("spell-check", () => {
 
       view.confirm();
       expect(editor.getText()).toBe("this");
+    });
+
+    // The editor's popover styling keys on `.select-list.popover-list` and its
+    // row styling on `ol.list-group`; a list missing any of the three renders
+    // as a transparent <ol> over the buffer text.
+    it("builds the overlay out of the classes the editor styles", async () => {
+      editor.setText("thiss");
+      await lint();
+
+      lumine.commands.dispatch(lumine.views.getView(editor), "spell-check:correct-misspelling");
+
+      const element = main.correctionsView.element;
+      expect(element.classList.contains("select-list")).toBe(true);
+      expect(element.classList.contains("popover-list")).toBe(true);
+      expect(element.querySelector("ol.list-group")).not.toBeNull();
+
+      main.correctionsView.destroy();
     });
 
     it("opens nothing from the command away from a misspelling", async () => {

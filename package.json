@@ -37,10 +37,10 @@
     },
     "excludedScopes": {
       "title": "Excluded Scopes",
-      "description": "Detailed scope selectors ignored inside checked grammars.",
+      "description": "Detailed scope selectors ignored inside checked grammars. The defaults keep code out of prose: fenced and indented code blocks, inline code spans and embedded source regions. Remove them to have code checked too.",
       "type": "array",
       "items": { "type": "string" },
-      "default": []
+      "default": ["markup.raw", "markup.code", "meta.embedded"]
     },
     "useSystem": {
       "title": "Use System Dictionaries",

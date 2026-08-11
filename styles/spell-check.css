@@ -1,5 +1,11 @@
+/* The corrections list, mounted as an overlay decoration at the misspelling.
+   Background, shadow, sizing and row scrolling all come from the editor's
+   `.select-list.popover-list` styling; this only fences the box and makes the
+   rows read as clickable. */
 .spell-check-corrections {
-  width: 25em;
-  max-height: 20em;
-  overflow: auto;
+  border: 1px solid var(--overlay-border-color);
+}
+
+.spell-check-corrections ol.list-group li {
+  cursor: pointer;
 }

@@ -45,6 +45,10 @@ ignores it and checks whatever is selected — a docstring or a comment block in
 setting does not cover, without turning checking on for that whole language. Those results are
 reported separately and stay put until the command is run again, cleared, or the words are edited.
 
+**Excluded Scopes** keeps code out of prose by default: fenced and indented code blocks, inline
+code spans and embedded source regions inside a checked grammar are not checked. Clear the setting
+to have code checked too, or add selectors of your own to exclude more.
+
 Where checking happens is the linter's decision, not this package's: only documents are linted — the
 pane items open in the workspace, saved or not, plus any editor its owner registered through the
 `linter.editors` service, such as a commit message box. A diff view, a patch preview or the field
