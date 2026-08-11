@@ -26,7 +26,9 @@ To install `spell-check` search for _spell-check_ in the Install pane of the Lum
 Commands available in `lumine-workspace`:
 
 - `spell-check:toggle`: enable or disable checking in the active editor,
-- `spell-check:correct-misspelling`: show corrections for the misspelling under the cursor.
+- `spell-check:correct-misspelling`: show corrections for the misspelling under the cursor,
+- `spell-check:check-selected`: check the selected text, whatever the grammar,
+- `spell-check:clear-checked-selection`: drop the results of the last checked selection.
 
 ## Usage
 
@@ -37,6 +39,15 @@ gutter dot, and no status-bar tile until something is found.
 Corrections are code actions. With the `intentions` package installed they appear in its menu
 alongside a language server's own fixes; the `spell-check:correct-misspelling` keystroke lists the
 same set without it.
+
+**Checked Grammars** decides which files are checked as you type. `spell-check:check-selected`
+ignores it and checks whatever is selected — a docstring or a comment block in a source file the
+setting does not cover, without turning checking on for that whole language. Those results are
+reported separately and stay put until the command is run again, cleared, or the words are edited.
+
+Single-line fields — search boxes, pickers, rename dialogs — carry no grammar, so the plain-text
+entry in **Checked Grammars** would otherwise cover them and underline the command palette in red.
+They are skipped unless **Check Single-Line Fields** is on.
 
 ## Customization
 
@@ -54,6 +65,7 @@ stand out from other diagnostics of the same severity, target the excerpt in you
 - **[spell-check](docs/spell-check.md)** (`^1.0.0`): consumed to combine external checker modules with the built-in checkers.
 - **linter.provider** (`1.0.0`): provided to report each misspelling as a diagnostic.
 - **intentions.list** (`1.0.0`): provided to offer the corrections as code actions at the cursor.
+- **linter.registry** (`^1.0.0`): consumed to publish a checked selection's results, which persist until they are replaced.
 
 ## Contributing
 

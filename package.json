@@ -12,7 +12,7 @@
   "engines": { "lumine": "^1.0.0" },
   "backgroundTips": [
     "You can open spelling corrections for the word under the cursor with {{ 'spell-check:correct-misspelling' | keystroke }}",
-    "You can temporarily disable checking in the current editor with the spell-check toggle command."
+    "You can spell-check a selection in any file, whatever its language, with the check selected command."
   ],
   "scripts": {
     "test": "lumine --test spec",
@@ -41,6 +41,12 @@
       "type": "array",
       "items": { "type": "string" },
       "default": []
+    },
+    "checkMiniEditors": {
+      "title": "Check Single-Line Fields",
+      "description": "Check the small editors used for search fields, pickers and dialogs. They carry no grammar, so the plain-text entry in Checked Grammars would otherwise cover them.",
+      "type": "boolean",
+      "default": false
     },
     "useSystem": {
       "title": "Use System Dictionaries",
@@ -104,7 +110,8 @@
     "intentions.list": { "versions": { "1.0.0": "provideIntentionsList" } }
   },
   "consumedServices": {
-    "spell-check": { "versions": { "^1.0.0": "consumeSpellCheckers" } }
+    "spell-check": { "versions": { "^1.0.0": "consumeSpellCheckers" } },
+    "linter.registry": { "versions": { "^1.0.0": "consumeLinterRegistry" } }
   },
   "dependencies": {
     "@lumine-code/spellchecker": "https://github.com/lumine-code/node-spellchecker/archive/d67b3f90acbabb0489e9212ed111e89f8c1edc47.tar.gz",

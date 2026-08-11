@@ -20,6 +20,7 @@ describe("spell-check", () => {
     lumine.config.set("spell-check.knownWords", []);
     lumine.config.set("spell-check.addKnownWords", false);
     lumine.config.set("spell-check.severity", "error");
+    lumine.config.set("spell-check.checkMiniEditors", false);
 
     await lumine.packages.activatePackage("language-javascript");
     // `spell-check:correct-misspelling` is registered on the workspace and
@@ -116,6 +117,217 @@ describe("spell-check", () => {
       lumine.commands.dispatch(workspace, "spell-check:toggle");
 
       expect((await lint()).length).toBe(1);
+    });
+  });
+
+  // A search field, a picker's input, a rename dialog: all editors, none with a
+  // grammar, so the plain-text entry in `grammars` matched them and the command
+  // palette came up underlined in red.
+  describe("single-line fields", () => {
+    let mini;
+
+    beforeEach(() => {
+      // A field carries no grammar, so it is the plain-text entry in the default
+      // `grammars` list that reaches it — which is what made the palette light
+      // up. With that entry present, the only thing left deciding is the setting.
+      lumine.config.set("spell-check.grammars", ["source.js", "text.plain.null-grammar"]);
+      mini = lumine.workspace.buildTextEditor({ mini: true });
+      mini.setText("documnet mispelled");
+    });
+
+    afterEach(() => mini.destroy());
+
+    it("reports nothing for one by default", async () => {
+      expect(mini.isMini()).toBe(true);
+
+      expect(await linter.lint(mini)).toEqual([]);
+    });
+
+    it("reports for one when the setting asks for it", async () => {
+      lumine.config.set("spell-check.checkMiniEditors", true);
+
+      expect((await linter.lint(mini)).length).toBe(2);
+    });
+
+    it("stops reporting again as soon as the setting is turned back off", async () => {
+      lumine.config.set("spell-check.checkMiniEditors", true);
+      expect((await linter.lint(mini)).length).toBe(2);
+
+      // Asked on every lint, so a checker built while it was on does not outlive
+      // the setting.
+      lumine.config.set("spell-check.checkMiniEditors", false);
+
+      expect(await linter.lint(mini)).toEqual([]);
+    });
+
+    it("still reports for an ordinary editor with no path", async () => {
+      editor.setText("documnet");
+
+      expect((await lint()).length).toBe(1);
+    });
+  });
+
+  describe("checking a selection", () => {
+    let published;
+
+    beforeEach(() => {
+      published = [];
+      main.consumeLinterRegistry(() => ({
+        name: "Spell Check/Selection",
+        setAllMessages: (messages) => published.push(messages),
+        clearMessages: () => published.push("cleared"),
+        dispose: () => {},
+      }));
+    });
+
+    const checkSelected = () => main.checkSelected({ target: lumine.views.getView(editor) });
+
+    it("reports only what is selected, at its buffer position", async () => {
+      editor.setText("line one\nhas a documnet here\n");
+      editor.setSelectedBufferRange([
+        [1, 6],
+        [1, 14],
+      ]);
+
+      await checkSelected();
+
+      expect(published.length).toBe(1);
+      expect(published[0].length).toBe(1);
+      expect(published[0][0].location.position).toEqual([
+        [1, 6],
+        [1, 14],
+      ]);
+      expect(editor.getTextInBufferRange(published[0][0].location.position)).toBe("documnet");
+    });
+
+    // Only the first row of a selection starts partway along a buffer row, so
+    // only its columns shift.
+    it("offsets a selection that starts mid-line and spans rows", async () => {
+      editor.setText("line one\nhas a documnet here\n");
+      editor.setSelectedBufferRange([
+        [0, 5],
+        [1, 18],
+      ]);
+
+      await checkSelected();
+
+      const words = published[0].map((m) => editor.getTextInBufferRange(m.location.position));
+      expect(words).toEqual(["documnet"]);
+    });
+
+    // The whole point: the text a user selects is usually text `grammars` does
+    // not cover, whose ordinary lint reports nothing.
+    it("checks a selection in a grammar that is not checked at all", async () => {
+      lumine.config.set("spell-check.grammars", ["text.restructuredtext"]);
+      editor.setText("a documnet here");
+      expect(await lint()).toEqual([]);
+
+      editor.setSelectedBufferRange([
+        [0, 2],
+        [0, 10],
+      ]);
+      await checkSelected();
+
+      expect(published[0].length).toBe(1);
+    });
+
+    it("reports every selection when there are several", async () => {
+      editor.setText("documnet and mispelled\n");
+      editor.setSelectedBufferRanges([
+        [
+          [0, 0],
+          [0, 8],
+        ],
+        [
+          [0, 13],
+          [0, 22],
+        ],
+      ]);
+
+      await checkSelected();
+
+      expect(published[0].length).toBe(2);
+    });
+
+    it("locates a selection by buffer while the buffer has no path", async () => {
+      editor.setText("a documnet here");
+      editor.setSelectedBufferRange([
+        [0, 2],
+        [0, 10],
+      ]);
+
+      await checkSelected();
+
+      expect(published[0][0].location.buffer).toBe(editor.getBuffer());
+      expect(published[0][0].location.file).toBeUndefined();
+    });
+
+    it("says so rather than publishing when nothing is selected", async () => {
+      spyOn(lumine.notifications, "addWarning");
+      editor.setText("a documnet here");
+      editor.setCursorBufferPosition([0, 0]);
+
+      await checkSelected();
+
+      expect(published).toEqual([]);
+      expect(lumine.notifications.addWarning).toHaveBeenCalled();
+    });
+
+    it("says so when the selection has no misspellings", async () => {
+      spyOn(lumine.notifications, "addInfo");
+      editor.setText("every word here is correct");
+      editor.setSelectedBufferRange([
+        [0, 0],
+        [0, 26],
+      ]);
+
+      await checkSelected();
+
+      expect(published[0]).toEqual([]);
+      expect(lumine.notifications.addInfo).toHaveBeenCalled();
+    });
+
+    it("replaces the previous results rather than adding to them", async () => {
+      editor.setText("documnet and mispelled\n");
+      editor.setSelectedBufferRange([
+        [0, 0],
+        [0, 8],
+      ]);
+      await checkSelected();
+      editor.setSelectedBufferRange([
+        [0, 13],
+        [0, 22],
+      ]);
+      await checkSelected();
+
+      expect(published.length).toBe(2);
+      expect(published[1].length).toBe(1);
+      expect(editor.getTextInBufferRange(published[1][0].location.position)).toBe("mispelled");
+    });
+
+    it("clears them on request", () => {
+      lumine.commands.dispatch(
+        lumine.views.getView(lumine.workspace),
+        "spell-check:clear-checked-selection",
+      );
+
+      expect(published).toEqual(["cleared"]);
+    });
+
+    // A selection check and the ongoing check of the same buffer are different
+    // questions; neither may cancel the other.
+    it("does not supersede the buffer's own check", async () => {
+      editor.setText("a documnet here");
+      editor.setSelectedBufferRange([
+        [0, 2],
+        [0, 10],
+      ]);
+
+      const buffered = lint();
+      await checkSelected();
+
+      expect((await buffered).length).toBe(1);
+      expect(published[0].length).toBe(1);
     });
   });
 

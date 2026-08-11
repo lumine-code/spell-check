@@ -5,17 +5,27 @@
       "submenu": [
         {
           "label": "Spell Check",
-          "submenu": [{ "label": "Toggle", "command": "spell-check:toggle" }]
+          "submenu": [
+            { "label": "Check Selected", "command": "spell-check:check-selected" },
+            {
+              "label": "Clear Checked Selection",
+              "command": "spell-check:clear-checked-selection"
+            },
+            { "label": "Toggle", "command": "spell-check:toggle" }
+          ]
         }
       ]
     }
   ],
   "context-menu": {
     "lumine-text-editor:not([mini])": [
+      { "type": "separator" },
       {
         "label": "Correct Spelling",
         "command": "spell-check:correct-misspelling"
-      }
+      },
+      { "label": "Check Selected", "command": "spell-check:check-selected" },
+      { "type": "separator" }
     ]
   }
 }
