@@ -20,7 +20,7 @@ describe("spell-check", () => {
     lumine.config.set("spell-check.knownWords", []);
     lumine.config.set("spell-check.addKnownWords", false);
     lumine.config.set("spell-check.severity", "error");
-    lumine.config.set("spell-check.checkMiniEditors", false);
+    lumine.config.set("spell-check.editors", "center");
 
     await lumine.packages.activatePackage("language-javascript");
     // `spell-check:correct-misspelling` is registered on the workspace and
@@ -120,47 +120,32 @@ describe("spell-check", () => {
     });
   });
 
-  // A search field, a picker's input, a rename dialog: all editors, none with a
-  // grammar, so the plain-text entry in `grammars` matched them and the command
-  // palette came up underlined in red.
-  describe("single-line fields", () => {
-    let mini;
-
-    beforeEach(() => {
-      // A field carries no grammar, so it is the plain-text entry in the default
-      // `grammars` list that reaches it — which is what made the palette light
-      // up. With that entry present, the only thing left deciding is the setting.
-      lumine.config.set("spell-check.grammars", ["source.js", "text.plain.null-grammar"]);
-      mini = lumine.workspace.buildTextEditor({ mini: true });
-      mini.setText("documnet mispelled");
+  // A diff view, a patch preview, a commit box in a dock, the field inside a
+  // picker: all real editors, none of them carrying a grammar, so the plain-text
+  // entry in `grammars` matched every one and the command palette came up
+  // underlined in red. Declaring the target set is what keeps them out, and the
+  // linter is what enforces it.
+  describe("which editors it asks for", () => {
+    it("asks only for the documents the centre holds by default", () => {
+      expect(lumine.config.get("spell-check.editors")).toBe("center");
+      expect(linter.editors).toBe("center");
     });
 
-    afterEach(() => mini.destroy());
+    // Read on every run, so the setting takes effect without the provider being
+    // registered again.
+    it("widens to every editor when the setting says so", () => {
+      lumine.config.set("spell-check.editors", "all");
 
-    it("reports nothing for one by default", async () => {
-      expect(mini.isMini()).toBe(true);
+      expect(linter.editors).toBe("any");
 
-      expect(await linter.lint(mini)).toEqual([]);
+      lumine.config.set("spell-check.editors", "center");
+
+      expect(linter.editors).toBe("center");
     });
 
-    it("reports for one when the setting asks for it", async () => {
-      lumine.config.set("spell-check.checkMiniEditors", true);
-
-      expect((await linter.lint(mini)).length).toBe(2);
-    });
-
-    it("stops reporting again as soon as the setting is turned back off", async () => {
-      lumine.config.set("spell-check.checkMiniEditors", true);
-      expect((await linter.lint(mini)).length).toBe(2);
-
-      // Asked on every lint, so a checker built while it was on does not outlive
-      // the setting.
-      lumine.config.set("spell-check.checkMiniEditors", false);
-
-      expect(await linter.lint(mini)).toEqual([]);
-    });
-
-    it("still reports for an ordinary editor with no path", async () => {
+    // A buffer nobody has saved yet is still one of those documents, which is why
+    // narrowing the set does not cost the untitled case.
+    it("still reports for an editor with no path", async () => {
       editor.setText("documnet");
 
       expect((await lint()).length).toBe(1);

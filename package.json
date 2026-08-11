@@ -42,11 +42,15 @@
       "items": { "type": "string" },
       "default": []
     },
-    "checkMiniEditors": {
-      "title": "Check Single-Line Fields",
-      "description": "Check the small editors used for search fields, pickers and dialogs. They carry no grammar, so the plain-text entry in Checked Grammars would otherwise cover them.",
-      "type": "boolean",
-      "default": false
+    "editors": {
+      "title": "Checked Editors",
+      "description": "Which editors are checked. A package builds editors of its own to render a diff, a patch preview, a commit box or a picker's input field with, and none of them carries a grammar — so the plain-text entry in Checked Grammars reaches all of them.",
+      "type": "string",
+      "enum": [
+        { "value": "center", "description": "Documents open in the workspace centre, saved or not" },
+        { "value": "all", "description": "Every editor, diffs and input fields included" }
+      ],
+      "default": "center"
     },
     "useSystem": {
       "title": "Use System Dictionaries",
