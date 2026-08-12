@@ -283,6 +283,68 @@ describe("spell-check", () => {
       expect(published).toEqual(["cleared"]);
     });
 
+    // The linter shows these, so they are underlined like anything else — and a
+    // word you can see marked has to be a word you can act on. They reach the
+    // corrections through the checker, the same way the buffer's own
+    // misspellings do, even though an ordinary lint of this file reports none.
+    describe("the corrections for them", () => {
+      beforeEach(async () => {
+        // A grammar the `grammars` setting does not cover: the case the command
+        // exists for, and the one where `lint` contributes nothing.
+        lumine.config.set("spell-check.grammars", ["source.gfm"]);
+        editor.setText("a documnet here");
+        editor.setSelectedBufferRange([
+          [0, 2],
+          [0, 10],
+        ]);
+        await checkSelected();
+      });
+
+      it("offers them at the cursor", () => {
+        const found = main.checkers.get(editor).correctionsAt([0, 4]);
+
+        expect(found).not.toBeNull();
+        expect(found.corrections.map((correction) => correction.label)).toContain("document");
+      });
+
+      it("offers them through the autocomplete provider", async () => {
+        const suggestions = await main.provideAutocomplete().getSuggestions({
+          editor,
+          bufferPosition: [0, 4],
+          activatedManually: true,
+        });
+
+        expect(suggestions.map((suggestion) => suggestion.text)).toContain("document");
+      });
+
+      it("adds one to Known Words by command", () => {
+        lumine.config.set("spell-check.addKnownWords", true);
+        lumine.config.set("spell-check.knownWords", []);
+        editor.setCursorBufferPosition([0, 4]);
+
+        lumine.commands.dispatch(lumine.views.getView(editor), "spell-check:add-known-word");
+
+        expect(lumine.config.get("spell-check.knownWords")).toContain("documnet");
+      });
+
+      it("forgets them once the results are cleared", () => {
+        lumine.commands.dispatch(
+          lumine.views.getView(lumine.workspace),
+          "spell-check:clear-checked-selection",
+        );
+
+        expect(main.checkers.get(editor).correctionsAt([0, 4])).toBeNull();
+      });
+
+      // An ordinary lint replaces `messages`; these live beside it and must
+      // survive that, or they would vanish on the next keystroke.
+      it("survives an ordinary lint of the same buffer", async () => {
+        await lint();
+
+        expect(main.checkers.get(editor).correctionsAt([0, 4])).not.toBeNull();
+      });
+    });
+
     // A selection check and the ongoing check of the same buffer are different
     // questions; neither may cancel the other.
     it("does not supersede the buffer's own check", async () => {

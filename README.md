@@ -52,6 +52,8 @@ enabled.
 ignores it and checks whatever is selected — a docstring or a comment block in a source file the
 setting does not cover, without turning checking on for that whole language. Those results are
 reported separately and stay put until the command is run again, cleared, or the words are edited.
+Corrections work on them exactly as on anything else, so a word the command marked can be fixed or
+added to Known Words where it stands.
 
 **Excluded Scopes** keeps code out of prose by default: fenced and indented code blocks, inline
 code spans and embedded source regions inside a checked grammar are not checked. Clear the setting
