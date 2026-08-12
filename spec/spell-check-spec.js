@@ -318,7 +318,6 @@ describe("spell-check", () => {
       });
 
       it("adds one to Known Words by command", () => {
-        lumine.config.set("spell-check.addKnownWords", true);
         lumine.config.set("spell-check.knownWords", []);
         editor.setCursorBufferPosition([0, 4]);
 
@@ -521,6 +520,44 @@ describe("spell-check", () => {
       const offered = await intentionsAt([0, 2]);
 
       expect(offered.map((intention) => intention.title)).toContain("Add to Known Words");
+    });
+
+    // What the setting governs: the code action, not the capability.
+    it("withholds that action from the code actions when the setting is off", async () => {
+      lumine.config.set("spell-check.addKnownWords", false);
+      editor.setText("thiss");
+      await lint();
+
+      const offered = await intentionsAt([0, 2]);
+
+      expect(offered.length).toBeGreaterThan(0);
+      expect(offered.map((intention) => intention.title)).not.toContain("Add to Known Words");
+    });
+
+    // The command is the user asking outright, so it needs no permission from a
+    // setting about what a menu offers.
+    it("still adds the word by command with the setting off", async () => {
+      lumine.config.set("spell-check.addKnownWords", false);
+      lumine.config.set("spell-check.knownWords", []);
+      editor.setText("thiss");
+      await lint();
+      editor.setCursorBufferPosition([0, 2]);
+
+      lumine.commands.dispatch(lumine.views.getView(editor), "spell-check:add-known-word");
+
+      expect(lumine.config.get("spell-check.knownWords")).toEqual(["thiss"]);
+    });
+
+    it("says so when there is no misspelling to add", async () => {
+      spyOn(lumine.notifications, "addWarning");
+      editor.setText("correct");
+      await lint();
+      editor.setCursorBufferPosition([0, 2]);
+
+      lumine.commands.dispatch(lumine.views.getView(editor), "spell-check:add-known-word");
+
+      expect(lumine.notifications.addWarning).toHaveBeenCalled();
+      expect(lumine.config.get("spell-check.knownWords")).toEqual([]);
     });
 
     // The command opens the autocomplete menu, which this package supplies the

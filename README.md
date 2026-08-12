@@ -45,8 +45,9 @@ not appear while typing — only when the menu is asked for. With the `intention
 the same set is in its code-action menu too, beside a language server's own fixes.
 
 `spell-check:add-known-word` is a command rather than a menu row, because adding a word to the
-dictionary changes a setting instead of replacing text. It needs **Offer Known Word Actions**
-enabled.
+dictionary changes a setting instead of replacing text. It always works. **Offer Known Word
+Actions** is a separate question — whether the same action is also offered among the code actions at
+the cursor — and does not gate the command.
 
 **Checked Grammars** decides which files are checked as you type. `spell-check:check-selected`
 ignores it and checks whatever is selected — a docstring or a comment block in a source file the

@@ -77,7 +77,7 @@
     },
     "addKnownWords": {
       "title": "Offer Known Word Actions",
-      "description": "Include an action that adds the selected word to Known Words.",
+      "description": "Include an action that adds the word at the cursor to Known Words among the code actions offered there. The add known word command works either way.",
       "type": "boolean",
       "default": false
     },
