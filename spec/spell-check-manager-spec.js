@@ -125,6 +125,31 @@ describe("SpellCheckerManager#check", () => {
     ]);
   });
 
+  // Only whitespace splits a run back apart, so two words the checker flagged
+  // either side of a single `(` have to stay two ranges all the way through.
+  it("keeps two flagged words apart when one character separates them", async () => {
+    const text = "call openDatabase(databasePath) here";
+    manager.checkers = [
+      fakeChecker("a", {
+        invertIncorrectAsCorrect: true,
+        incorrect: [...occurrences(text, "openDatabase"), ...occurrences(text, "databasePath")],
+      }),
+    ];
+
+    const { misspellings } = await check(text);
+
+    expect(misspellings).toEqual([
+      [
+        [0, 5],
+        [0, 17],
+      ],
+      [
+        [0, 18],
+        [0, 30],
+      ],
+    ]);
+  });
+
   it("flags a word only when every inverting checker flags it", async () => {
     const text = "alpha bravo charlie";
     manager.checkers = [
