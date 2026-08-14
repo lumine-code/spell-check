@@ -2,10 +2,7 @@
 
 Report misspelled words as linter diagnostics with contextual corrections.
 
-Misspellings are reported to the [`linter`](https://github.com/lumine-code/linter) package, which
-is what shows them: underlined in the editor, listed in its panel, walked with its navigation
-commands, and marked on the scrollbar and minimap by `marker-linter`. **Without `linter` installed,
-nothing is shown** — spell-check has no surfaces of its own.
+Misspellings are reported to the [`linter`](https://github.com/lumine-code/linter) package, which is what shows them: underlined in the editor, listed in its panel, walked with its navigation commands, and marked on the scrollbar and minimap by `marker-linter`. **Without `linter` installed, nothing is shown** — spell-check has no surfaces of its own.
 
 ## Features
 
@@ -19,7 +16,7 @@ nothing is shown** — spell-check has no surfaces of its own.
 
 ## Installation
 
-To install `spell-check` search for _spell-check_ in the Install pane of the Lumine settings or run `lumine --install lumine-code/spell-check`.
+To install `spell-check` search for it in the Install pane of the Lumine settings, or run the command `lumine --install lumine-code/spell-check`.
 
 ## Commands
 
@@ -33,42 +30,21 @@ Commands available in `lumine-workspace`:
 
 ## Usage
 
-A misspelling is reported as an error by default, which is the severity that renders the red
-underline spelling conventionally uses. Set **Severity** to `hint` for the quiet tier instead: no
-gutter dot, and no status-bar tile until something is found.
+A misspelling is reported as an error by default, which is the severity that renders the red underline spelling conventionally uses. Set **Severity** to `hint` for the quiet tier instead: no gutter dot, and no status-bar tile until something is found.
 
-Corrections are autocomplete suggestions. `spell-check:correct-misspelling` opens the autocomplete
-menu on the misspelling under the cursor and the corrections are at the top of it; picking one
-replaces the whole word, wherever inside it the cursor happened to be. A misspelling with exactly
-one correction is simply fixed, since the menu confirms a lone suggestion without opening. They do
-not appear while typing — only when the menu is asked for. With the `intentions` package installed
-the same set is in its code-action menu too, beside a language server's own fixes.
+Corrections are autocomplete suggestions. `spell-check:correct-misspelling` opens the autocomplete menu on the misspelling under the cursor and the corrections are at the top of it; picking one replaces the whole word, wherever inside it the cursor happened to be. A misspelling with exactly one correction is simply fixed, since the menu confirms a lone suggestion without opening. They do not appear while typing — only when the menu is asked for. With the `intentions` package installed the same set is in its code-action menu too, beside a language server's own fixes.
 
-`spell-check:add-known-word` is a command rather than a menu row, because adding a word to the
-dictionary changes a setting instead of replacing text. It always works. **Offer Known Word
-Actions** is a separate question — whether the same action is also offered among the code actions at
-the cursor — and does not gate the command.
+`spell-check:add-known-word` is a command rather than a menu row, because adding a word to the dictionary changes a setting instead of replacing text. It always works. **Offer Known Word Actions** is a separate question — whether the same action is also offered among the code actions at the cursor — and does not gate the command.
 
-**Checked Grammars** decides which files are checked as you type. `spell-check:check-selected`
-ignores it and checks whatever is selected — a docstring or a comment block in a source file the
-setting does not cover, without turning checking on for that whole language. Those results are
-reported separately and stay put until the command is run again, cleared, or the words are edited.
-Corrections work on them exactly as on anything else, so a word the command marked can be fixed or
-added to Known Words where it stands.
+**Checked Grammars** decides which files are checked as you type. `spell-check:check-selected` ignores it and checks whatever is selected — a docstring or a comment block in a source file the setting does not cover, without turning checking on for that whole language. Those results are reported separately and stay put until the command is run again, cleared, or the words are edited. Corrections work on them exactly as on anything else, so a word the command marked can be fixed or added to Known Words where it stands.
 
-**Excluded Scopes** keeps code out of prose by default: fenced and indented code blocks, inline
-code spans and embedded source regions inside a checked grammar are not checked. Clear the setting
-to have code checked too, or add selectors of your own to exclude more.
+**Excluded Scopes** keeps code out of prose by default: fenced and indented code blocks, inline code spans and embedded source regions inside a checked grammar are not checked. Clear the setting to have code checked too, or add selectors of your own to exclude more.
 
-Where checking happens is the linter's decision, not this package's: only documents are linted — the
-pane items open in the workspace, saved or not, plus any editor its owner registered through the
-`linter.editors` service, such as a commit message box. A diff view, a patch preview or the field
-inside a picker is never checked; none of them is a document.
+Where checking happens is the linter's decision, not this package's: only documents are linted — the pane items open in the workspace, saved or not, plus any editor its owner registered through the `linter.editors` service, such as a commit message box. A diff view, a patch preview or the field inside a picker is never checked; none of them is a document.
 
 ## Customization
 
-Misspellings are the linter's markers, so they are styled with its severity classes. To make them
-stand out from other diagnostics of the same severity, target the excerpt in your `styles.css`:
+Misspellings are the linter's markers, so they are styled with its severity classes. To make them stand out from other diagnostics of the same severity, target the excerpt in your `styles.css`:
 
 ```css
 .linter-row .linter-excerpt {
@@ -78,11 +54,11 @@ stand out from other diagnostics of the same severity, target the excerpt in you
 
 ## Services
 
-- **[spell-check](docs/spell-check.md)** (`^1.0.0`): consumed to combine external checker modules with the built-in checkers.
-- **linter.provider** (`1.0.0`): provided to report each misspelling as a diagnostic.
-- **autocomplete.provider** (`1.0.0`): provided to offer the corrections in the autocomplete menu, above the buffer's own words.
-- **intentions.list** (`1.0.0`): provided to offer the corrections as code actions at the cursor.
-- **linter.registry** (`^1.0.0`): consumed to publish a checked selection's results, which persist until they are replaced.
+- [`spell-check`](docs/spell-check.md): consumed to combine external checker modules with the built-in checkers.
+- `linter.provider`: provided to report each misspelling as a diagnostic.
+- `autocomplete.provider`: provided to offer the corrections in the autocomplete menu, above the buffer's own words.
+- `intentions.list`: provided to offer the corrections as code actions at the cursor.
+- `linter.registry`: consumed to publish a checked selection's results, which persist until they are replaced.
 
 ## Contributing
 
