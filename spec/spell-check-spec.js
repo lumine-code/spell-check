@@ -465,6 +465,52 @@ describe("spell-check", () => {
 
       expect(wordsIn(await lint())).toEqual(["heddingmistak", "prosemistak"]);
     });
+
+    // The linter lints an editor as it opens, before it is attached to
+    // anything, and a language mode that has not tokenized does not refuse a
+    // scope descriptor — it answers every position with the root scope alone,
+    // so nothing is `markup.raw` yet and nothing is excluded. Nothing re-lints
+    // once tokenizing catches up either, so a check that came back first left
+    // every fenced block and inline span in the buffer underlined until the
+    // next edit.
+    it("holds its messages until the language mode has tokenized", async () => {
+      editor.setText("Prose with a prosemistak and `inlinemistak` span.\n");
+      const checker = main.checkerFor(editor);
+      let releaseTokenization;
+      spyOn(checker, "whenTokenized").and.returnValue(
+        new Promise((resolve) => (releaseTokenization = resolve)),
+      );
+
+      let messages = null;
+      const pending = checker.lint().then((result) => (messages = result));
+      // The check itself has come back by now; only the wait is left.
+      await conditionPromise(() => checker.whenTokenized.calls.any());
+      expect(messages).toBeNull();
+
+      releaseTokenization();
+      await pending;
+
+      expect(wordsIn(messages)).toEqual(["prosemistak"]);
+    });
+
+    // The wait is unbounded, so it cannot be the only way out: an editor that
+    // is closed while its language mode is still parsing would otherwise leave
+    // the linter holding a promise that never settles.
+    it("gives up the wait when the editor goes away", async () => {
+      const fresh = await lumine.workspace.open();
+      fresh.setGrammar(lumine.grammars.grammarForScopeName("source.gfm"));
+      fresh.setText("a prosemistak here\n");
+      const checker = main.checkerFor(fresh);
+      spyOn(checker, "tokenizationOf").and.returnValue(new Promise(() => {}));
+
+      const pending = checker.lint();
+      await conditionPromise(() => checker.tokenizationOf.calls.any());
+      fresh.destroy();
+
+      // Null, not an empty array: the editor is gone, so there is nothing to
+      // say about it rather than nothing wrong with it.
+      expect(await pending).toBeNull();
+    });
   });
 
   describe("the corrections", () => {
