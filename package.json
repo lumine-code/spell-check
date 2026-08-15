@@ -3,13 +3,29 @@
   "author": "lumine-code",
   "version": "1.0.0",
   "description": "Report misspelled words as linter diagnostics with contextual corrections.",
-  "keywords": ["dictionary", "grammar", "proofreading", "writing", "language"],
+  "keywords": [
+    "dictionary",
+    "grammar",
+    "proofreading",
+    "writing",
+    "language"
+  ],
   "repository": "https://github.com/lumine-code/spell-check",
-  "bugs": { "url": "https://github.com/lumine-code/spell-check/issues" },
+  "bugs": {
+    "url": "https://github.com/lumine-code/spell-check/issues"
+  },
   "license": "MIT",
   "main": "./lib/main",
-  "files": ["docs", "keymaps", "lib", "menus", "spec"],
-  "engines": { "lumine": "^1.0.0" },
+  "files": [
+    "docs",
+    "keymaps",
+    "lib",
+    "menus",
+    "spec"
+  ],
+  "engines": {
+    "lumine": "^1.0.0"
+  },
   "backgroundTips": [
     "You can open spelling corrections for the word under the cursor with {{ 'spell-check:correct-misspelling' | keystroke }}",
     "You can spell-check a selection in any file, whatever its language, with the check selected command."
@@ -25,22 +41,43 @@
       "title": "Severity",
       "description": "Severity reported for a misspelling. Error is the tier that renders the red underline spelling conventionally uses; hint is the quiet one, with no gutter dot and no status-bar tile until something is found.",
       "type": "string",
-      "enum": ["error", "warning", "info", "hint"],
+      "enum": [
+        "error",
+        "warning",
+        "info",
+        "hint"
+      ],
       "default": "error"
     },
     "grammars": {
       "title": "Checked Grammars",
       "description": "Root scopes or detailed scope selectors that should be checked.",
       "type": "array",
-      "items": { "type": "string" },
-      "default": ["source.asciidoc", "source.gfm", "text.git-commit", "text.plain", "text.plain.null-grammar", "source.rst", "text.restructuredtext"]
+      "items": {
+        "type": "string"
+      },
+      "default": [
+        "source.asciidoc",
+        "source.gfm",
+        "text.git-commit",
+        "text.plain",
+        "text.plain.null-grammar",
+        "source.rst",
+        "text.restructuredtext"
+      ]
     },
     "excludedScopes": {
       "title": "Excluded Scopes",
       "description": "Detailed scope selectors ignored inside checked grammars. The defaults keep code out of prose: fenced and indented code blocks, inline code spans and embedded source regions. Remove them to have code checked too.",
       "type": "array",
-      "items": { "type": "string" },
-      "default": ["markup.raw", "markup.code", "meta.embedded"]
+      "items": {
+        "type": "string"
+      },
+      "default": [
+        "markup.raw",
+        "markup.code",
+        "meta.embedded"
+      ]
     },
     "useSystem": {
       "title": "Use System Dictionaries",
@@ -58,21 +95,27 @@
       "title": "Locales",
       "description": "Locale identifiers such as en-US or pl-PL; an empty list uses the detected default.",
       "type": "array",
-      "items": { "type": "string" },
+      "items": {
+        "type": "string"
+      },
       "default": []
     },
     "localePaths": {
       "title": "Dictionary Search Paths",
       "description": "Additional directories and path specifications containing Hunspell dictionaries.",
       "type": "array",
-      "items": { "type": "string" },
+      "items": {
+        "type": "string"
+      },
       "default": []
     },
     "knownWords": {
       "title": "Known Words",
       "description": "Words treated as correct; prefix an entry with ! to make it case-sensitive.",
       "type": "array",
-      "items": { "type": "string" },
+      "items": {
+        "type": "string"
+      },
       "default": []
     },
     "addKnownWords": {
@@ -86,9 +129,18 @@
       "description": "Choose where dictionary loading messages are displayed.",
       "type": "string",
       "enum": [
-        { "value": "both", "description": "Popup and console" },
-        { "value": "popup", "description": "Popup only" },
-        { "value": "console", "description": "Console only" }
+        {
+          "value": "both",
+          "description": "Popup and console"
+        },
+        {
+          "value": "popup",
+          "description": "Popup only"
+        },
+        {
+          "value": "console",
+          "description": "Console only"
+        }
       ],
       "default": "both"
     },
@@ -100,25 +152,45 @@
     }
   },
   "providedServices": {
-    "linter.provider": { "versions": { "1.0.0": "provideLinter" } },
-    "autocomplete.provider": { "versions": { "1.0.0": "provideAutocomplete" } },
-    "intentions.list": { "versions": { "1.0.0": "provideIntentionsList" } }
+    "linter.provider": {
+      "versions": {
+        "1.0.0": "provideLinter"
+      }
+    },
+    "autocomplete.provider": {
+      "versions": {
+        "1.0.0": "provideAutocomplete"
+      }
+    },
+    "intentions.list": {
+      "versions": {
+        "1.0.0": "provideIntentionsList"
+      }
+    }
   },
   "consumedServices": {
-    "spell-check": { "versions": { "^1.0.0": "consumeSpellCheckers" } },
-    "linter.registry": { "versions": { "^1.0.0": "consumeLinterRegistry" } }
+    "spell-check": {
+      "versions": {
+        "^1.0.0": "consumeSpellCheckers"
+      }
+    },
+    "linter.registry": {
+      "versions": {
+        "^1.0.0": "consumeLinterRegistry"
+      }
+    }
   },
   "dependencies": {
     "@lumine-code/spellchecker": "https://github.com/lumine-code/node-spellchecker/archive/d67b3f90acbabb0489e9212ed111e89f8c1edc47.tar.gz",
     "debug": "^4.4.3",
-    "multi-integer-range": "^2.0.0"
+    "multi-integer-range": "^2.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "eslint": "^10.8.0",
+    "eslint": "^10.8.1",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-n": "^18.2.2",
-    "globals": "^17.9.0",
+    "eslint-plugin-n": "^18.3.0",
+    "globals": "^17.11.0",
     "prettier": "^3.9.6"
   }
 }
