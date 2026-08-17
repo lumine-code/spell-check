@@ -662,6 +662,13 @@ describe("spell-check", () => {
       expect(provider.filterSuggestions).toBe(false);
     });
 
+    it("serves the editors packages register, not just the workspace center", () => {
+      // Corrections follow the linter into editors watched under the `default`
+      // label — the commit box — and a provider without labels never reaches
+      // them.
+      expect(provider.labels).toEqual(["workspace-center", "default"]);
+    });
+
     it("replaces the whole misspelling through `ranges`", async () => {
       editor.setText("thiss");
       await lint();
