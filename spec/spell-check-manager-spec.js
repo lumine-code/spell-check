@@ -102,6 +102,58 @@ describe("SpellCheckerManager#check", () => {
     ]);
   });
 
+  // `occurrences` walks the text left to right, so nothing built on it can hand
+  // over a set that is out of order or self-overlapping. A checker is free to do
+  // both, and the ranges are collected raw and normalized once per set rather
+  // than merged on every append — which is only correct if normalizing is what
+  // sorts and merges them.
+  it("orders a checker's ranges that arrive out of order", async () => {
+    manager.checkers = [
+      fakeChecker("a", {
+        invertIncorrectAsCorrect: true,
+        incorrect: [
+          { start: 8, end: 11 },
+          { start: 0, end: 3 },
+        ],
+      }),
+    ];
+
+    const { misspellings } = await check("aaa bbb ccc");
+
+    expect(misspellings).toEqual([
+      [
+        [0, 0],
+        [0, 3],
+      ],
+      [
+        [0, 8],
+        [0, 11],
+      ],
+    ]);
+  });
+
+  it("merges a checker's ranges that overlap or repeat", async () => {
+    manager.checkers = [
+      fakeChecker("a", {
+        invertIncorrectAsCorrect: true,
+        incorrect: [
+          { start: 0, end: 5 },
+          { start: 3, end: 9 },
+          { start: 0, end: 5 },
+        ],
+      }),
+    ];
+
+    const { misspellings } = await check("abcdefghi jkl");
+
+    expect(misspellings).toEqual([
+      [
+        [0, 0],
+        [0, 9],
+      ],
+    ]);
+  });
+
   it("keeps each row's columns relative to that row", async () => {
     const text = "alpha thiss\nbeta thiss gamma\n\nthiss";
     manager.checkers = [
