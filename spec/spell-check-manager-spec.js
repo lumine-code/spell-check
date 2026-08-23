@@ -1,4 +1,5 @@
 const manager = require("../lib/spell-check-manager");
+const KnownWordsChecker = require("../lib/known-words-checker");
 
 // A checker whose results are dictated by the spec. `incorrect` ranges use the
 // half-open `{ start, end }` shape the native spellchecker returns.
@@ -13,6 +14,37 @@ function fakeChecker(id, results, { priority = 100, enabled = true } = {}) {
     providesSuggestions: () => false,
     providesAdding: () => false,
     check: () => ({ id, ...results }),
+    suggest: () => [],
+  };
+}
+
+// A checker that answers about whatever text it is handed, tokenizing the way
+// the Windows spelling service does: a hyphen or a dot stays inside a word but
+// never begins or ends one, so `graviss-sofistik` is flagged whole where
+// Hunspell flags each run of letters separately. A checker that replays a fixed
+// answer cannot stand in for one here, because the remainders are put to it as a
+// text of their own.
+function compoundChecker(id, dictionary) {
+  const known = new Set(dictionary.map((word) => word.toLowerCase()));
+  const tokenPattern = /[\p{L}\p{M}](?:[\p{L}\p{M}'’.-]*[\p{L}\p{M}])?/gu;
+  return {
+    getId: () => id,
+    getName: () => id,
+    getPriority: () => 100,
+    isEnabled: () => true,
+    getStatus: () => "ok",
+    providesSpelling: () => true,
+    providesSuggestions: () => false,
+    providesAdding: () => false,
+    check(_args, text) {
+      const incorrect = [];
+      for (const match of text.matchAll(tokenPattern)) {
+        const parts = [...match[0].matchAll(/[\p{L}\p{M}]+/gu)];
+        if (parts.every((part) => known.has(part[0].toLowerCase()))) continue;
+        incorrect.push({ start: match.index, end: match.index + match[0].length });
+      }
+      return { id, invertIncorrectAsCorrect: true, incorrect };
+    },
     suggest: () => [],
   };
 }
@@ -326,5 +358,87 @@ describe("SpellCheckerManager#check", () => {
         [1, 12],
       ],
     ]);
+  });
+
+  it("does not mark an empty line a flagged range crosses", async () => {
+    const text = "aa\n\nbb";
+    manager.checkers = [
+      fakeChecker("a", { invertIncorrectAsCorrect: true, incorrect: [{ start: 0, end: 6 }] }),
+    ];
+
+    const { misspellings } = await check(text);
+
+    expect(misspellings).toEqual([
+      [
+        [0, 0],
+        [0, 2],
+      ],
+      [
+        [2, 0],
+        [2, 2],
+      ],
+    ]);
+  });
+
+  // The checkers disagree about where a word ends, so subtracting a known word
+  // from a range flagged around it leaves text nobody judged.
+  describe("what a correct range leaves behind", () => {
+    const dictionary = ["and", "is", "broken", "source"];
+    const knownWords = () => new KnownWordsChecker(["Graviss", "SOFiSTiK"]);
+
+    it("drops the punctuation between two known words", async () => {
+      const text = "# graviss-sofistik";
+      manager.checkers = [compoundChecker("service", dictionary), knownWords()];
+
+      const { misspellings } = await check(text);
+
+      // Was reported as `- is not in the dictionary`.
+      expect(misspellings).toEqual([]);
+    });
+
+    it("drops a remainder the second pass considers a word", async () => {
+      const text = "graviss.source";
+      manager.checkers = [compoundChecker("service", dictionary), knownWords()];
+
+      const { misspellings } = await check(text);
+
+      // `source` is in the dictionary; only `graviss` ever made the compound
+      // one the service would flag.
+      expect(misspellings).toEqual([]);
+    });
+
+    it("reports a remainder the second pass still flags, at its own range", async () => {
+      const text = "SOFiSTiK-zzzzq is broken";
+      manager.checkers = [compoundChecker("service", dictionary), knownWords()];
+
+      const { misspellings } = await check(text);
+
+      // `zzzzq`, without the hyphen the subtraction left in front of it.
+      expect(misspellings).toEqual([
+        [
+          [0, 9],
+          [0, 14],
+        ],
+      ]);
+    });
+
+    it("asks again only about the ranges the subtraction changed", async () => {
+      const text = "zzzzq and SOFiSTiK";
+      const service = compoundChecker("service", dictionary);
+      spyOn(service, "check").and.callThrough();
+      manager.checkers = [service, knownWords()];
+
+      const { misspellings } = await check(text);
+
+      // `SOFiSTiK` is cleared outright and `zzzzq` was never touched, so there
+      // is nothing left to put back to the checker.
+      expect(service.check.calls.count()).toBe(1);
+      expect(misspellings).toEqual([
+        [
+          [0, 0],
+          [0, 5],
+        ],
+      ]);
+    });
   });
 });
