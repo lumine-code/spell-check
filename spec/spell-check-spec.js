@@ -623,6 +623,28 @@ describe("spell-check", () => {
       ]);
     });
 
+    it("opens corrections for a checked mini editor instead of the file behind it", () => {
+      const miniEditor = lumine.workspace.buildTextEditor({ mini: true });
+      const registration = lumine.textEditors.add(miniEditor);
+      const miniElement = lumine.views.getView(miniEditor);
+      lumine.workspace.getElement().appendChild(miniElement);
+      main.checkers.set(miniEditor, {
+        correctionsAt: jasmine.createSpy("correctionsAt").and.returnValue({}),
+      });
+      const dispatch = spyOn(lumine.commands, "dispatch");
+
+      try {
+        main.correctMisspelling({ target: miniElement });
+
+        expect(dispatch).toHaveBeenCalledWith(miniElement, "autocomplete:activate", {
+          activatedManually: true,
+        });
+      } finally {
+        registration.dispose();
+        miniEditor.destroy();
+      }
+    });
+
     it("opens nothing from the command away from a misspelling", async () => {
       editor.setText("correct");
       await lint();
