@@ -433,7 +433,7 @@ describe("spell-check", () => {
         require("../package.json").configSchema.excludedScopes.default,
       );
       editor.setGrammar(lumine.grammars.grammarForScopeName("source.gfm"));
-      await editor.getBuffer().getLanguageMode().ready;
+      expect(await editor.whenGrammarSettled()).toBe(true);
     });
 
     it("ships defaults that exclude code", () => {
@@ -466,6 +466,15 @@ describe("spell-check", () => {
       expect(wordsIn(await lint())).toEqual(["heddingmistak", "prosemistak"]);
     });
 
+    it("uses the public waiter for an editor whose parse is already settled", async () => {
+      editor.setText("Prose with a prosemistak.\n");
+      expect(await editor.whenGrammarSettled()).toBe(true);
+      const whenGrammarSettled = spyOn(editor, "whenGrammarSettled").and.callThrough();
+
+      expect(wordsIn(await lint())).toEqual(["prosemistak"]);
+      expect(whenGrammarSettled).toHaveBeenCalledWith({ signal: undefined });
+    });
+
     // The linter lints an editor as it opens, before it is attached to
     // anything, and a language mode that has not parsed does not refuse a
     // scope descriptor — it answers every position with the root scope alone,
@@ -473,43 +482,97 @@ describe("spell-check", () => {
     // once parsing catches up either, so a check that came back first left
     // every fenced block and inline span in the buffer underlined until the
     // next edit.
-    it("holds its messages until the language mode has parsed", async () => {
+    it("holds its messages until the grammar has settled", async () => {
       editor.setText("Prose with a prosemistak and `inlinemistak` span.\n");
       const checker = main.checkerFor(editor);
       let releaseParsing;
-      spyOn(checker, "whenParsed").and.returnValue(
+      const whenGrammarSettled = spyOn(editor, "whenGrammarSettled").and.returnValue(
         new Promise((resolve) => (releaseParsing = resolve)),
       );
 
       let messages = null;
       const pending = checker.lint().then((result) => (messages = result));
       // The check itself has come back by now; only the wait is left.
-      await conditionPromise(() => checker.whenParsed.calls.any());
+      await conditionPromise(() => whenGrammarSettled.calls.any());
       expect(messages).toBeNull();
 
-      releaseParsing();
+      releaseParsing(true);
       await pending;
 
       expect(wordsIn(messages)).toEqual(["prosemistak"]);
     });
 
-    // The wait is unbounded, so it cannot be the only way out: an editor that
-    // is closed while its language mode is still parsing would otherwise leave
-    // the linter holding a promise that never settles.
+    it("returns null when a grammar change invalidates the pending parse", async () => {
+      editor.setText("a prosemistak here\n");
+      const checker = main.checkerFor(editor);
+      const whenGrammarSettled = spyOn(editor, "whenGrammarSettled").and.callFake(
+        () =>
+          new Promise((resolve) => {
+            const subscription = editor.onDidChangeGrammar(() => {
+              subscription.dispose();
+              resolve(false);
+            });
+          }),
+      );
+
+      const pending = checker.lint();
+      await conditionPromise(() => whenGrammarSettled.calls.any());
+      editor.setGrammar(lumine.grammars.grammarForScopeName("source.js"));
+
+      expect(await pending).toBeNull();
+    });
+
     it("gives up the wait when the editor goes away", async () => {
       const fresh = await lumine.workspace.open();
       fresh.setGrammar(lumine.grammars.grammarForScopeName("source.gfm"));
       fresh.setText("a prosemistak here\n");
       const checker = main.checkerFor(fresh);
-      spyOn(checker, "parsingOf").and.returnValue(new Promise(() => {}));
+      const whenGrammarSettled = spyOn(fresh, "whenGrammarSettled").and.callFake(
+        () =>
+          new Promise((resolve) => {
+            const subscription = fresh.onDidDestroy(() => {
+              subscription.dispose();
+              resolve(false);
+            });
+          }),
+      );
 
       const pending = checker.lint();
-      await conditionPromise(() => checker.parsingOf.calls.any());
+      await conditionPromise(() => whenGrammarSettled.calls.any());
       fresh.destroy();
 
       // Null, not an empty array: the editor is gone, so there is nothing to
       // say about it rather than nothing wrong with it.
       expect(await pending).toBeNull();
+    });
+
+    it("forwards an AbortSignal and returns null when it is aborted", async () => {
+      editor.setText("a prosemistak here\n");
+      const checker = main.checkerFor(editor);
+      const controller = new AbortController();
+      const whenGrammarSettled = spyOn(editor, "whenGrammarSettled").and.callFake(
+        ({ signal }) =>
+          new Promise((resolve) => {
+            signal.addEventListener("abort", () => resolve(false), { once: true });
+          }),
+      );
+
+      const pending = checker.lint({ signal: controller.signal });
+      await conditionPromise(() => whenGrammarSettled.calls.any());
+      controller.abort();
+
+      expect(await pending).toBeNull();
+      expect(whenGrammarSettled).toHaveBeenCalledWith({ signal: controller.signal });
+    });
+
+    it("returns null when the waiter reports a parse error", async () => {
+      editor.setText("a prosemistak here\n");
+      const checker = main.checkerFor(editor);
+      spyOn(editor, "whenGrammarSettled").and.returnValue(Promise.resolve(false));
+      const scopes = spyOn(editor, "scopeDescriptorForBufferPosition").and.callThrough();
+
+      expect(await checker.lint()).toBeNull();
+      expect(scopes).not.toHaveBeenCalled();
     });
   });
 
