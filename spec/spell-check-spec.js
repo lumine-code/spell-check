@@ -362,10 +362,10 @@ describe("spell-check", () => {
   });
 
   describe("scope filtering", () => {
-    // Scope filtering can only work once the grammar has tokenized, and which
-    // engine backs `source.js` is not this spec's business. Wait until the
-    // editor actually reports a comment scope where we put one.
-    const commentIsTokenized = (position) =>
+    // Scope filtering can only work once the grammar has parsed, and which
+    // parse completes asynchronously. Wait until the editor reports a comment
+    // scope where we put one.
+    const commentIsParsed = (position) =>
       conditionPromise(() =>
         editor
           .scopeDescriptorForBufferPosition(position)
@@ -376,14 +376,14 @@ describe("spell-check", () => {
     it("skips a misspelling whose scope is excluded", async () => {
       lumine.config.set("spell-check.excludedScopes", ["comment"]);
       editor.setText("// thiss");
-      await commentIsTokenized([0, 3]);
+      await commentIsParsed([0, 3]);
 
       expect(await lint()).toEqual([]);
     });
 
     it("reports the same misspelling once nothing excludes its scope", async () => {
       editor.setText("// thiss");
-      await commentIsTokenized([0, 3]);
+      await commentIsParsed([0, 3]);
 
       expect(wordsIn(await lint())).toEqual(["thiss"]);
     });
@@ -391,7 +391,7 @@ describe("spell-check", () => {
     it("checks only the named descendant scope when the setting names one", async () => {
       lumine.config.set("spell-check.grammars", ["source.js comment"]);
       editor.setText("// thiss\nthatt();");
-      await commentIsTokenized([0, 3]);
+      await commentIsParsed([0, 3]);
 
       const messages = await lint();
       expect(wordsIn(messages)).toEqual(["thiss"]);
@@ -467,27 +467,27 @@ describe("spell-check", () => {
     });
 
     // The linter lints an editor as it opens, before it is attached to
-    // anything, and a language mode that has not tokenized does not refuse a
+    // anything, and a language mode that has not parsed does not refuse a
     // scope descriptor — it answers every position with the root scope alone,
     // so nothing is `markup.raw` yet and nothing is excluded. Nothing re-lints
-    // once tokenizing catches up either, so a check that came back first left
+    // once parsing catches up either, so a check that came back first left
     // every fenced block and inline span in the buffer underlined until the
     // next edit.
-    it("holds its messages until the language mode has tokenized", async () => {
+    it("holds its messages until the language mode has parsed", async () => {
       editor.setText("Prose with a prosemistak and `inlinemistak` span.\n");
       const checker = main.checkerFor(editor);
-      let releaseTokenization;
-      spyOn(checker, "whenTokenized").and.returnValue(
-        new Promise((resolve) => (releaseTokenization = resolve)),
+      let releaseParsing;
+      spyOn(checker, "whenParsed").and.returnValue(
+        new Promise((resolve) => (releaseParsing = resolve)),
       );
 
       let messages = null;
       const pending = checker.lint().then((result) => (messages = result));
       // The check itself has come back by now; only the wait is left.
-      await conditionPromise(() => checker.whenTokenized.calls.any());
+      await conditionPromise(() => checker.whenParsed.calls.any());
       expect(messages).toBeNull();
 
-      releaseTokenization();
+      releaseParsing();
       await pending;
 
       expect(wordsIn(messages)).toEqual(["prosemistak"]);
@@ -501,10 +501,10 @@ describe("spell-check", () => {
       fresh.setGrammar(lumine.grammars.grammarForScopeName("source.gfm"));
       fresh.setText("a prosemistak here\n");
       const checker = main.checkerFor(fresh);
-      spyOn(checker, "tokenizationOf").and.returnValue(new Promise(() => {}));
+      spyOn(checker, "parsingOf").and.returnValue(new Promise(() => {}));
 
       const pending = checker.lint();
-      await conditionPromise(() => checker.tokenizationOf.calls.any());
+      await conditionPromise(() => checker.parsingOf.calls.any());
       fresh.destroy();
 
       // Null, not an empty array: the editor is gone, so there is nothing to
