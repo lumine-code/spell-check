@@ -688,7 +688,7 @@ describe("spell-check", () => {
 
     it("opens corrections for a checked mini editor instead of the file behind it", () => {
       const miniEditor = lumine.workspace.buildTextEditor({ mini: true });
-      const registration = lumine.textEditors.add(miniEditor);
+      const registration = lumine.textEditors.add(miniEditor, { role: "input" });
       const miniElement = lumine.views.getView(miniEditor);
       lumine.workspace.getElement().appendChild(miniElement);
       main.checkers.set(miniEditor, {
