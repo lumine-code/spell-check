@@ -30,10 +30,6 @@
     "language-gfm",
     "language-javascript"
   ],
-  "backgroundTips": [
-    "You can open spelling corrections for the word under the cursor with {{ 'spell-check:correct-misspelling' | keystroke }}",
-    "You can spell-check a selection in any file, whatever its language, with the check selected command."
-  ],
   "scripts": {
     "test": "lumine --test spec",
     "lint": "eslint . --max-warnings 0",
@@ -169,6 +165,11 @@
     "intentions.list": {
       "versions": {
         "1.0.0": "provideIntentionsList"
+      }
+    },
+    "background-tips.provider": {
+      "versions": {
+        "1.0.0": "provideBackgroundTips"
       }
     }
   },
