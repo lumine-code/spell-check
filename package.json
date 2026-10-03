@@ -186,7 +186,7 @@
     }
   },
   "dependencies": {
-    "@lumine-code/spellchecker": "https://github.com/lumine-code/node-spellchecker/archive/d67b3f90acbabb0489e9212ed111e89f8c1edc47.tar.gz",
+    "@lumine-code/native-spelling": "github:lumine-code/native-spelling#6827d78d6bb77ae23749dc87232733b79149b7ab",
     "debug": "^4.4.3",
     "multi-integer-range": "^6.1.0"
   },
@@ -197,5 +197,8 @@
     "eslint-plugin-n": "^18.4.0",
     "globals": "^17.12.0",
     "prettier": "^3.9.9"
+  },
+  "allowScripts": {
+    "github:lumine-code/native-spelling#6827d78d6bb77ae23749dc87232733b79149b7ab": true
   }
 }

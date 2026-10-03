@@ -1,4 +1,4 @@
-const spellchecker = require("@lumine-code/spellchecker");
+const spellchecker = require("@lumine-code/native-spelling");
 const LocaleChecker = require("../lib/locale-checker");
 const KnownWordsChecker = require("../lib/known-words-checker");
 const env = require("../lib/checker-env");
