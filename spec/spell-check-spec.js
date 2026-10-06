@@ -18,8 +18,8 @@ describe("spell-check", () => {
     lumine.config.set("spell-check.useLocales", true);
     lumine.config.set("spell-check.locales", ["en-US"]);
     lumine.config.set("spell-check.knownWords", []);
-    lumine.config.set("spell-check.addKnownWords", false);
-    lumine.config.set("spell-check.severity", "error");
+    lumine.config.unset("spell-check.addKnownWords");
+    lumine.config.unset("spell-check.severity");
 
     await lumine.packages.activatePackage("language-javascript");
     // `spell-check:correct-misspelling` is registered on the workspace and
@@ -54,15 +54,15 @@ describe("spell-check", () => {
       const messages = await lint();
 
       expect(wordsIn(messages)).toEqual(["thiss"]);
-      expect(messages[0].severity).toBe("error");
+      expect(messages[0].severity).toBe("hint");
       expect(messages[0].excerpt).toBe("thiss is not in the dictionary");
     });
 
     it("reports the severity the setting asks for", async () => {
-      lumine.config.set("spell-check.severity", "hint");
+      lumine.config.set("spell-check.severity", "error");
       editor.setText("thiss");
 
-      expect((await lint())[0].severity).toBe("hint");
+      expect((await lint())[0].severity).toBe("error");
     });
 
     it("locates a message by path once the buffer has one", async () => {
@@ -619,10 +619,7 @@ describe("spell-check", () => {
       expect(editor.getText()).toBe("this");
     });
 
-    it("offers the known-word action when the setting allows it", async () => {
-      // Changing the setting rebuilds the known-words checker, which is where
-      // the action comes from.
-      lumine.config.set("spell-check.addKnownWords", true);
+    it("offers the known-word action by default", async () => {
       editor.setText("thiss");
       await lint();
 

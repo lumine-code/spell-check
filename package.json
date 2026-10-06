@@ -39,7 +39,7 @@
   "configSchema": {
     "severity": {
       "title": "Severity",
-      "description": "Severity reported for a misspelling. Error is the tier that renders the red underline spelling conventionally uses; hint is the quiet one, with no gutter dot and no status-bar tile until something is found.",
+      "description": "Severity reported for a misspelling. Hint uses a subtle underline without a gutter dot and keeps misspellings separate from code errors; error uses a red underline.",
       "type": "string",
       "enum": [
         "error",
@@ -47,7 +47,7 @@
         "info",
         "hint"
       ],
-      "default": "error"
+      "default": "hint"
     },
     "grammars": {
       "title": "Checked Grammars",
@@ -122,7 +122,7 @@
       "title": "Offer Known Word Actions",
       "description": "Include an action that adds the word at the cursor to Known Words among the code actions offered there. The add known word command works either way.",
       "type": "boolean",
-      "default": false
+      "default": true
     },
     "noticesMode": {
       "title": "Dictionary Notices",
