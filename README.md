@@ -2,6 +2,8 @@
 
 Report misspelled words as linter diagnostics with contextual corrections.
 
+Fork of [pulsar-edit/pulsar](https://github.com/pulsar-edit/pulsar) (`packages/spell-check`).
+
 Misspellings are reported to the [`linter`](https://github.com/lumine-code/linter) package, which is what shows them: underlined in the editor, listed in its panel, walked with its navigation commands, and marked on the scrollbar and minimap by its marker layer. **Without `linter` installed, nothing is shown** — spell-check has no surfaces of its own.
 
 ## Features
