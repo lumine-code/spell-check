@@ -96,6 +96,9 @@ describe("spell-check dictionary path specifications", () => {
     const manager = main.getInstance(main.globalArgs);
     manager.init();
     const checker = manager.localeCheckers[0];
+    // A host may have /usr/share/hunspell or another default dictionary.
+    // Select the packaged fallback explicitly for this fixture.
+    checker.checkDefaultPaths = false;
     const result = await checker.check({}, "correct thiss word");
     expect(checker.source).toBe("packaged");
     expect(result.incorrect).toHaveSize(1);
