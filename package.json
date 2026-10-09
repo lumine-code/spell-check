@@ -28,7 +28,8 @@
   },
   "specPackages": [
     "language-gfm",
-    "language-javascript"
+    "language-javascript",
+    "linter"
   ],
   "scripts": {
     "test": "lumine --test spec",
