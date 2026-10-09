@@ -32,7 +32,7 @@ Commands available in `lumine-workspace`:
 
 ## Usage
 
-A misspelling is reported as an error by default, which is the severity that renders the red underline spelling conventionally uses. Set **Severity** to `hint` for the quiet tier instead: no gutter dot, and no status-bar tile until something is found.
+A misspelling is reported as a hint by default: a subtle underline without a gutter dot. Set **Severity** to `error` to use a red underline.
 
 Corrections are autocomplete suggestions. `spell-check:correct-misspelling` opens the autocomplete menu on the misspelling under the cursor and the corrections are at the top of it; picking one replaces the whole word, wherever inside it the cursor happened to be. A misspelling with exactly one correction is simply fixed, since the menu confirms a lone suggestion without opening. They do not appear while typing — only when the menu is asked for. With the `intentions` package installed the same set is in its code-action menu too, beside a language server's own fixes.
 
