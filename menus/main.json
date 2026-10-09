@@ -18,16 +18,5 @@
         }
       ]
     }
-  ],
-  "context-menu": {
-    "lumine-text-editor:not([mini])": [
-      { "type": "separator" },
-      {
-        "label": "Correct Spelling",
-        "command": "spell-check:correct-misspelling"
-      },
-      { "label": "Check Selected", "command": "spell-check:check-selected" },
-      { "type": "separator" }
-    ]
-  }
+  ]
 }
