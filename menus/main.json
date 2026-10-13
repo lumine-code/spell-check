@@ -38,7 +38,9 @@
           "submenu": [
             {
               "label": "Correct Spelling…",
-              "command": "spell-check:correct-misspelling"
+              "command": "spell-check:correct-misspelling",
+              "group": "transform",
+              "order": 30
             }
           ]
         }
@@ -52,7 +54,9 @@
           "submenu": [
             {
               "label": "Toggle Spell Checking",
-              "command": "spell-check:toggle"
+              "command": "spell-check:toggle",
+              "group": "editing",
+              "order": 20
             }
           ]
         }
