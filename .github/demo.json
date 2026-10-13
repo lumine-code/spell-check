@@ -1,0 +1,17 @@
+{
+  "title": "spell-check",
+  "description": "Identify spelling mistakes in project notes through linter diagnostics.",
+  "recordedOn": "2026-10-13",
+  "sourceRevision": "f7d20c576b2c21b3aa400d7a9327c1fe49fc9fee",
+  "mode": "normal",
+  "fontSettings": "default",
+  "themeSourceRevision": "6564a9e21899b5541e9c8f8006f9be6d6d72e6ad",
+  "images": [
+    {
+      "file": "demo.png",
+      "label": "Identify spelling mistakes in project notes through linter diagnostics.",
+      "width": 1100,
+      "height": 500
+    }
+  ]
+}

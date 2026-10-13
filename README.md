@@ -16,6 +16,8 @@ Misspellings are reported to the [`linter`](https://github.com/lumine-code/linte
 - **Known words**: keeps a configurable case-sensitive or case-insensitive personal word list.
 - **Checker services**: combines optional spelling providers with the built-in native and locale checkers.
 
+![Identify spelling mistakes in project notes through linter diagnostics.](.github/demo.png)
+
 ## Installation
 
 To install `spell-check` search for it in the Install pane of the Lumine settings, or run the command `lumine --install lumine-code/spell-check`.
