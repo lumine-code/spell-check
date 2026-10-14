@@ -6,3 +6,4 @@ __generated__
 gen
 apollo.config.js
 schema.json
+demo/
