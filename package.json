@@ -28,6 +28,7 @@
   },
   "specPackages": [
     "language-gfm",
+    "language-html",
     "language-javascript",
     "linter"
   ],
@@ -69,7 +70,7 @@
     },
     "excludedScopes": {
       "title": "Excluded Scopes",
-      "description": "Detailed scope selectors ignored inside checked grammars. The defaults keep code out of prose: fenced and indented code blocks, inline code spans and embedded source regions. Remove them to have code checked too.",
+      "description": "Detailed scope selectors ignored inside checked grammars. The defaults skip code blocks, inline code, embedded source, HTML tags and attributes. Text between HTML tags is still checked. Remove the exclusions to check code too.",
       "type": "array",
       "items": {
         "type": "string"
@@ -77,7 +78,10 @@
       "default": [
         "markup.raw",
         "markup.code",
-        "meta.embedded"
+        "meta.embedded",
+        "entity.name.tag",
+        "entity.other.attribute-name",
+        "string.html"
       ]
     },
     "useSystem": {

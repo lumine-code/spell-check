@@ -437,11 +437,10 @@ describe("spell-check", () => {
     });
 
     it("ships defaults that exclude code", () => {
-      expect(require("../package.json").configSchema.excludedScopes.default).toEqual([
-        "markup.raw",
-        "markup.code",
-        "meta.embedded",
-      ]);
+      const excludedScopes = require("../package.json").configSchema.excludedScopes.default;
+      for (const scope of ["markup.raw", "markup.code", "meta.embedded"]) {
+        expect(excludedScopes).toContain(scope);
+      }
     });
 
     it("reports prose misspellings and leaves every kind of code alone", async () => {
@@ -464,6 +463,41 @@ describe("spell-check", () => {
       });
 
       expect(wordsIn(await lint())).toEqual(["heddingmistak", "prosemistak"]);
+    });
+
+    it("leaves the README's HTML picture markup out of prose results", async () => {
+      await lumine.packages.activatePackage("language-html");
+      editor.setText(
+        "A prosemistak outside the picture.\n" +
+          "\n" +
+          "<picture>\n" +
+          '  <source media="(prefers-color-scheme: dark)" srcset="resources/brand/banner-dark.png">\n' +
+          '  <img src="resources/brand/banner.png" alt="Lumine — your editor, your way." width="1600">\n' +
+          "</picture>\n",
+      );
+
+      expect(wordsIn(await lint())).toEqual(["prosemistak"]);
+    });
+
+    it("checks inline and block HTML text while excluding tags and attributes", async () => {
+      await lumine.packages.activatePackage("language-html");
+      editor.setText(
+        "Text <custommistak attributemistak=\"doublemistak\" singlemistak='singlevaluemistak' baremistak=unquotedmistak>inlinemistak</custommistak>.\n" +
+          "\n" +
+          "<div>\n" +
+          "blockmistak\n" +
+          "</div>\n",
+      );
+
+      expect(wordsIn(await lint())).toEqual(["inlinemistak", "blockmistak"]);
+    });
+
+    it("checks HTML attribute values again when the exclusions are cleared", async () => {
+      await lumine.packages.activatePackage("language-html");
+      editor.setText('<span title="thiss">thiss</span>\n');
+      lumine.config.set("spell-check.excludedScopes", []);
+
+      expect(wordsIn(await lint())).toEqual(["thiss", "thiss"]);
     });
 
     it("uses the public waiter for an editor whose parse is already settled", async () => {
