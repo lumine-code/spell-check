@@ -7,7 +7,7 @@
           "label": "Spell Check",
           "submenu": [
             {
-              "label": "Correct Spelling",
+              "label": "Correct Spelling…",
               "command": "spell-check:correct-misspelling"
             },
             {
@@ -15,15 +15,15 @@
               "command": "spell-check:add-known-word"
             },
             {
-              "label": "Check Selected",
+              "label": "Check Spelling in Selection",
               "command": "spell-check:check-selected"
             },
             {
-              "label": "Clear Checked Selection",
+              "label": "Clear Selection Diagnostics",
               "command": "spell-check:clear-checked-selection"
             },
             {
-              "label": "Toggle",
+              "label": "Toggle Spell Checking",
               "command": "spell-check:toggle"
             }
           ]
