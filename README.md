@@ -24,12 +24,18 @@ To install `spell-check` search for it in the Install pane of the Lumine setting
 
 ## Commands
 
-Commands available in `lumine-workspace`:
+Commands available in `lumine-text-editor:not([mini])`:
 
-- `spell-check:toggle`: enable or disable checking in the active editor,
-- `spell-check:correct-misspelling`: show corrections for the misspelling under the cursor,
+- `spell-check:toggle`: enable or disable checking in this editor,
 - `spell-check:add-known-word`: add the misspelling under the cursor to Known Words,
 - `spell-check:check-selected`: check the selected text, whatever the grammar,
+
+Commands available in `lumine-text-editor:not([readonly])`:
+
+- `spell-check:correct-misspelling`: show corrections for the misspelling under the cursor.
+
+Commands available in `lumine-workspace`:
+
 - `spell-check:clear-checked-selection`: drop the results of the last checked selection.
 
 ## Usage

@@ -22,9 +22,6 @@ describe("spell-check", () => {
     lumine.config.unset("spell-check.severity");
 
     await lumine.packages.activatePackage("language-javascript");
-    // `spell-check:correct-misspelling` is registered on the workspace and
-    // resolved from the dispatch target, so a dispatch aimed at an editor has to
-    // be able to reach the workspace element through the document.
     jasmine.attachToDOM(lumine.views.getView(lumine.workspace));
     editor = await lumine.workspace.open();
     editor.setGrammar(lumine.grammars.grammarForScopeName("source.js"));
@@ -39,6 +36,32 @@ describe("spell-check", () => {
   });
 
   describe("the linter it provides", () => {
+    it("keeps editor commands unavailable on the workspace and toggles the dispatch editor", async () => {
+      editor.setText("thiss");
+      expect((await lint()).length).toBe(1);
+      const other = await lumine.workspace.open();
+      try {
+        other.setGrammar(editor.getGrammar());
+        other.setText("thiss");
+        expect((await linter.lint(other)).length).toBe(1);
+        for (const command of [
+          "toggle",
+          "correct-misspelling",
+          "add-known-word",
+          "check-selected",
+        ]) {
+          expect(
+            lumine.commands.canDispatch(lumine.workspace.getElement(), `spell-check:${command}`),
+          ).toBe(false);
+        }
+        lumine.commands.dispatch(editor.getElement(), "spell-check:toggle");
+        expect(await lint()).toEqual([]);
+        expect((await linter.lint(other)).length).toBe(1);
+      } finally {
+        other.destroy();
+      }
+    });
+
     it("describes itself the way the service requires", () => {
       expect(linter.name).toBe("Spell Check");
       expect(linter.scope).toBe("file");
@@ -102,18 +125,17 @@ describe("spell-check", () => {
       editor.setText("thiss");
       expect((await lint()).length).toBe(1);
 
-      lumine.commands.dispatch(lumine.views.getView(lumine.workspace), "spell-check:toggle");
+      lumine.commands.dispatch(editor.getElement(), "spell-check:toggle");
 
       expect(await lint()).toEqual([]);
     });
 
     it("reports again once checking is toggled back on", async () => {
       editor.setText("thiss");
-      const workspace = lumine.views.getView(lumine.workspace);
-      lumine.commands.dispatch(workspace, "spell-check:toggle");
+      lumine.commands.dispatch(editor.getElement(), "spell-check:toggle");
       expect(await lint()).toEqual([]);
 
-      lumine.commands.dispatch(workspace, "spell-check:toggle");
+      lumine.commands.dispatch(editor.getElement(), "spell-check:toggle");
 
       expect((await lint()).length).toBe(1);
     });
