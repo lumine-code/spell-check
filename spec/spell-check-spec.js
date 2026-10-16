@@ -36,6 +36,21 @@ describe("spell-check", () => {
   });
 
   describe("the linter it provides", () => {
+    it("keeps correction shortcuts off readonly editors while allowing checks", () => {
+      const target = editor.getElement();
+      expect(
+        lumine.keymaps.findKeyBindings({ target, command: "spell-check:correct-misspelling" })
+          .length,
+      ).toBeGreaterThan(0);
+      target.setAttribute("readonly", "");
+      expect(lumine.commands.canDispatch(target, "spell-check:check-selected")).toBe(true);
+      expect(lumine.commands.canDispatch(target, "spell-check:correct-misspelling")).toBe(false);
+      expect(
+        lumine.keymaps.findKeyBindings({ target, command: "spell-check:correct-misspelling" })
+          .length,
+      ).toBe(0);
+    });
+
     it("keeps editor commands unavailable on the workspace and toggles the dispatch editor", async () => {
       editor.setText("thiss");
       expect((await lint()).length).toBe(1);

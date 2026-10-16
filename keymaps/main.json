@@ -2,10 +2,10 @@
   // The corrections are autocomplete suggestions, so its own keymap moves
   // through the list and confirms — there is no list of ours to bind.
   //
-  // Bare `lumine-text-editor` on purpose: correcting a misspelling is about
+  // Include mini editors: correcting a misspelling is about
   // whichever editor has focus, a commit box included, not about the file
   // behind a dialog.
-  "lumine-text-editor": {
+  "lumine-text-editor:not([readonly])": {
     "cmdorctrl-:": "spell-check:correct-misspelling"
   }
 }
