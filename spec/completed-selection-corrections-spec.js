@@ -15,7 +15,7 @@ describe("Completed selection corrections", () => {
     editor = await lumine.workspace.open();
     editor.setText("documnet");
     editor.selectAll();
-    await main.checkSelected({ target: editor.getElement() });
+    await main.checkSpelling({ target: editor.getElement() });
     expect(main.indie.getMessages().length).toBe(1);
     expect(
       main.checkers

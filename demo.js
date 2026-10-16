@@ -23,7 +23,7 @@ module.exports = {
           state.editor.selectAll();
           lumine.commands.dispatch(
             lumine.views.getView(state.editor),
-            "spell-check:check-selected",
+            "spell-check:check-spelling",
           );
           state.editor.setCursorBufferPosition([2, 9]);
           await new Promise((resolve) => setTimeout(resolve, 1800));

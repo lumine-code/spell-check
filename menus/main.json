@@ -15,8 +15,8 @@
               "command": "spell-check:add-known-word"
             },
             {
-              "label": "Check Spelling in Selection",
-              "command": "spell-check:check-selected"
+              "label": "Check Spelling",
+              "command": "spell-check:check-spelling"
             },
             {
               "label": "Clear Selection Diagnostics",

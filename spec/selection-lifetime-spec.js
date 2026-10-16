@@ -13,7 +13,7 @@ describe("Spell Check selection lifetime", () => {
     });
   }
   function check() {
-    const promise = main.checkSelected();
+    const promise = main.checkSpelling();
     pending.push(promise);
     return promise;
   }

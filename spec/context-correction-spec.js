@@ -14,25 +14,22 @@ describe("spelling context correction target", () => {
       { isSuggestion: true, suggestion: "correct", label: "correct" },
     ]);
   }
-  function contextItem() {
+  function contextTemplateAt(position = [0, 7], offset = {}) {
     const component = element.getComponent();
-    const pixel = element.pixelPositionForBufferPosition([0, 7]);
+    const pixel = element.pixelPositionForBufferPosition(position);
     const rectangle = component.refs.lineTiles.getBoundingClientRect();
     const event = {
       target: element.querySelector(".line") ?? element,
       button: 2,
-      clientX: rectangle.left + pixel.left + 1,
-      clientY: rectangle.top + pixel.top + component.getLineHeight() / 2,
+      clientX: rectangle.left + pixel.left + 1 + (offset.left ?? 0),
+      clientY: rectangle.top + pixel.top + component.getLineHeight() / 2 + (offset.top ?? 0),
     };
-    const point = editor.bufferPositionForScreenPosition(
-      component.screenPositionForMouseEvent(event),
+    return lumine.contextMenu.templateForEvent(event);
+  }
+  function contextItem() {
+    const item = contextTemplateAt().find(
+      (item) => item.command === "spell-check:correct-misspelling",
     );
-    expect(point.row).toBe(0);
-    expect(point.column).toBeGreaterThanOrEqual(5);
-    expect(point.column).toBeLessThan(12);
-    const item = lumine.contextMenu
-      .templateForEvent(event)
-      .find((item) => item.command === "spell-check:correct-misspelling");
     expect(item).toBeDefined();
     return item;
   }
@@ -70,6 +67,53 @@ describe("spelling context correction target", () => {
   afterEach(async () => {
     await lumine.packages.deactivatePackage("spell-check");
     editor.destroy();
+  });
+
+  it("hides correction on correct text even when the caret is in a misspelling", () => {
+    editor.setCursorBufferPosition([0, 7]);
+    for (const position of [
+      [0, 1],
+      [0, 4],
+    ]) {
+      expect(
+        contextTemplateAt(position).some(
+          (item) => item.command === "spell-check:correct-misspelling",
+        ),
+      ).toBe(false);
+    }
+    expect(main.getInstance(main.globalArgs).suggest).not.toHaveBeenCalled();
+    expect(editor.getCursorBufferPosition().toArray()).toEqual([0, 7]);
+  });
+
+  it("includes correction for a typo found by an explicit check", () => {
+    const checker = main.checkers.get(editor);
+    checker.setSelectionMessages(checker.messages);
+    checker.messages = [];
+    contextItem();
+    expect(main.getInstance(main.globalArgs).suggest).not.toHaveBeenCalled();
+  });
+
+  it("hides correction in blank space beside and below a misspelled final word", () => {
+    for (const offset of [{ left: 100 }, { top: element.getComponent().getLineHeight() * 2 }]) {
+      expect(
+        contextTemplateAt([0, 12], offset).some(
+          (item) => item.command === "spell-check:correct-misspelling",
+        ),
+      ).toBe(false);
+    }
+  });
+
+  it("uses the caret to decide visibility for a keyboard context menu", () => {
+    const hasCorrection = () =>
+      lumine.contextMenu
+        .templateForEvent({ target: element })
+        .some((item) => item.command === "spell-check:correct-misspelling");
+    expect(hasCorrection()).toBe(false);
+    editor.setCursorBufferPosition([0, 7]);
+    expect(hasCorrection()).toBe(true);
+    editor.setCursorBufferPosition([0, 12]);
+    expect(hasCorrection()).toBe(true);
+    expect(main.getInstance(main.globalArgs).suggest).not.toHaveBeenCalled();
   });
 
   it("moves to the clicked typo only when the actual context correction is confirmed", async () => {

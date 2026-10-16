@@ -43,7 +43,7 @@ describe("spell-check", () => {
           .length,
       ).toBeGreaterThan(0);
       target.setAttribute("readonly", "");
-      expect(lumine.commands.canDispatch(target, "spell-check:check-selected")).toBe(true);
+      expect(lumine.commands.canDispatch(target, "spell-check:check-spelling")).toBe(true);
       expect(lumine.commands.canDispatch(target, "spell-check:correct-misspelling")).toBe(false);
       expect(
         lumine.keymaps.findKeyBindings({ target, command: "spell-check:correct-misspelling" })
@@ -63,7 +63,7 @@ describe("spell-check", () => {
           "toggle",
           "correct-misspelling",
           "add-known-word",
-          "check-selected",
+          "check-spelling",
         ]) {
           expect(
             lumine.commands.canDispatch(lumine.workspace.getElement(), `spell-check:${command}`),
@@ -173,7 +173,7 @@ describe("spell-check", () => {
     });
   });
 
-  describe("checking a selection", () => {
+  describe("explicit spelling checks", () => {
     let published;
 
     beforeEach(() => {
@@ -186,7 +186,7 @@ describe("spell-check", () => {
       }));
     });
 
-    const checkSelected = () => main.checkSelected({ target: lumine.views.getView(editor) });
+    const checkSpelling = () => main.checkSpelling({ target: lumine.views.getView(editor) });
 
     it("reports only what is selected, at its buffer position", async () => {
       editor.setText("line one\nhas a documnet here\n");
@@ -195,7 +195,7 @@ describe("spell-check", () => {
         [1, 14],
       ]);
 
-      await checkSelected();
+      await checkSpelling();
 
       expect(published.length).toBe(1);
       expect(published[0].length).toBe(1);
@@ -215,7 +215,7 @@ describe("spell-check", () => {
         [1, 18],
       ]);
 
-      await checkSelected();
+      await checkSpelling();
 
       const words = published[0].map((m) => editor.getTextInBufferRange(m.location.position));
       expect(words).toEqual(["documnet"]);
@@ -232,7 +232,7 @@ describe("spell-check", () => {
         [0, 2],
         [0, 10],
       ]);
-      await checkSelected();
+      await checkSpelling();
 
       expect(published[0].length).toBe(1);
     });
@@ -250,7 +250,7 @@ describe("spell-check", () => {
         ],
       ]);
 
-      await checkSelected();
+      await checkSpelling();
 
       expect(published[0].length).toBe(2);
     });
@@ -262,21 +262,137 @@ describe("spell-check", () => {
         [0, 10],
       ]);
 
-      await checkSelected();
+      await checkSpelling();
 
       expect(published[0][0].location.buffer).toBe(editor.getBuffer());
       expect(published[0][0].location.file).toBeUndefined();
     });
 
-    it("says so rather than publishing when nothing is selected", async () => {
-      spyOn(lumine.notifications, "addWarning");
+    it("checks the whole buffer when every selection is empty", async () => {
+      editor.setText("a documnet here\na mispelled word");
+      editor.setSelectedBufferRanges([
+        [
+          [0, 0],
+          [0, 0],
+        ],
+        [
+          [1, 0],
+          [1, 0],
+        ],
+      ]);
+      await checkSpelling();
+
+      expect(published.length).toBe(1);
+      expect(wordsIn(published[0])).toEqual(["documnet", "mispelled"]);
+      expect(published[0].map((message) => message.location.position)).toEqual([
+        [
+          [0, 2],
+          [0, 10],
+        ],
+        [
+          [1, 2],
+          [1, 11],
+        ],
+      ]);
+      expect(published[0][0].location.buffer).toBe(editor.getBuffer());
+      expect(main.checkers.get(editor).correctionsAt([1, 4])).not.toBeNull();
+    });
+
+    it("checks only allowed descendant scopes and preserves exclusions for a whole file", async () => {
+      lumine.config.set("spell-check.grammars", ["source.js comment"]);
+      lumine.config.set("spell-check.excludedScopes", ["comment.block"]);
+      editor.setText('// thiss\nconst text = "thatt";\n/* documnet */');
+      editor.setCursorBufferPosition([1, 0]);
+      for (const [position, prefix] of [
+        [[0, 3], "comment.line"],
+        [[1, 15], "string.quoted"],
+        [[2, 3], "comment.block"],
+      ]) {
+        await conditionPromise(() =>
+          editor
+            .scopeDescriptorForBufferPosition(position)
+            .getScopesArray()
+            .some((scope) => scope.startsWith(prefix)),
+        );
+      }
+
+      await checkSpelling();
+
+      expect(published.length).toBe(1);
+      expect(wordsIn(published[0])).toEqual(["thiss"]);
+      expect(published[0][0].location.position).toEqual([
+        [0, 3],
+        [0, 8],
+      ]);
+    });
+
+    it("skips a whole file whose grammar is not checked", async () => {
+      lumine.config.set("spell-check.grammars", ["text.restructuredtext"]);
       editor.setText("a documnet here");
       editor.setCursorBufferPosition([0, 0]);
+      const manager = main.getInstance(main.globalArgs);
+      spyOn(manager, "check").and.callThrough();
 
-      await checkSelected();
+      await checkSpelling();
 
-      expect(published).toEqual([]);
-      expect(lumine.notifications.addWarning).toHaveBeenCalled();
+      expect(published).toEqual([[]]);
+      expect(manager.check).not.toHaveBeenCalled();
+    });
+
+    it("checks only nonempty selections and bypasses scope settings when some cursors have no selection", async () => {
+      lumine.config.set("spell-check.grammars", []);
+      lumine.config.set("spell-check.excludedScopes", ["source.js"]);
+      editor.setText("documnet and mispelled");
+      editor.setSelectedBufferRanges([
+        [
+          [0, 0],
+          [0, 0],
+        ],
+        [
+          [0, 13],
+          [0, 22],
+        ],
+      ]);
+
+      await checkSpelling();
+
+      expect(published.length).toBe(1);
+      expect(wordsIn(published[0])).toEqual(["mispelled"]);
+    });
+
+    it("cancels a whole file's pending grammar wait when its results are cleared", async () => {
+      lumine.config.set("spell-check.grammars", ["source.js comment"]);
+      editor.setText("// thiss");
+      editor.setCursorBufferPosition([0, 0]);
+      let signal;
+      const whenGrammarSettled = spyOn(editor, "whenGrammarSettled").and.callFake((options) => {
+        signal = options.signal;
+        return new Promise((resolve) => {
+          signal.addEventListener("abort", () => resolve(false), { once: true });
+        });
+      });
+      const pending = checkSpelling();
+      await conditionPromise(() => whenGrammarSettled.calls.any());
+
+      lumine.commands.dispatch(
+        lumine.workspace.getElement(),
+        "spell-check:clear-checked-selection",
+      );
+      await pending;
+
+      expect(signal.aborted).toBe(true);
+      expect(published).toEqual(["cleared"]);
+    });
+
+    it("says so when a whole file has no misspellings", async () => {
+      spyOn(lumine.notifications, "addInfo");
+      editor.setText("every word here is correct");
+      editor.setCursorBufferPosition([0, 0]);
+
+      await checkSpelling();
+
+      expect(published).toEqual([[]]);
+      expect(lumine.notifications.addInfo).toHaveBeenCalledWith("No misspellings in the file.");
     });
 
     it("says so when the selection has no misspellings", async () => {
@@ -287,10 +403,12 @@ describe("spell-check", () => {
         [0, 26],
       ]);
 
-      await checkSelected();
+      await checkSpelling();
 
       expect(published[0]).toEqual([]);
-      expect(lumine.notifications.addInfo).toHaveBeenCalled();
+      expect(lumine.notifications.addInfo).toHaveBeenCalledWith(
+        "No misspellings in the selection.",
+      );
     });
 
     it("replaces the previous results rather than adding to them", async () => {
@@ -299,12 +417,12 @@ describe("spell-check", () => {
         [0, 0],
         [0, 8],
       ]);
-      await checkSelected();
+      await checkSpelling();
       editor.setSelectedBufferRange([
         [0, 13],
         [0, 22],
       ]);
-      await checkSelected();
+      await checkSpelling();
 
       expect(published.length).toBe(2);
       expect(published[1].length).toBe(1);
@@ -334,7 +452,7 @@ describe("spell-check", () => {
           [0, 2],
           [0, 10],
         ]);
-        await checkSelected();
+        await checkSpelling();
       });
 
       it("offers them at the cursor", () => {
@@ -391,7 +509,7 @@ describe("spell-check", () => {
       ]);
 
       const buffered = lint();
-      await checkSelected();
+      await checkSpelling();
 
       expect((await buffered).length).toBe(1);
       expect(published[0].length).toBe(1);

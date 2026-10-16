@@ -28,7 +28,7 @@ Commands available in `lumine-text-editor:not([mini])`:
 
 - `spell-check:toggle`: enable or disable checking in this editor,
 - `spell-check:add-known-word`: add the misspelling under the cursor to Known Words,
-- `spell-check:check-selected`: check the selected text, whatever the grammar,
+- `spell-check:check-spelling`: check selected text regardless of scope settings, or the file's configured scopes when nothing is selected.
 
 Commands available in `lumine-text-editor:not([readonly])`:
 
@@ -36,7 +36,7 @@ Commands available in `lumine-text-editor:not([readonly])`:
 
 Commands available in `lumine-workspace`:
 
-- `spell-check:clear-checked-selection`: drop the results of the last checked selection.
+- `spell-check:clear-checked-selection`: drop the results of the last explicit spelling check.
 
 ## Usage
 
@@ -46,7 +46,7 @@ Corrections are autocomplete suggestions. `spell-check:correct-misspelling` open
 
 `spell-check:add-known-word` is a command rather than a menu row, because adding a word to the dictionary changes a setting instead of replacing text. It always works. **Offer Known Word Actions** is a separate question — whether the same action is also offered among the code actions at the cursor — and does not gate the command.
 
-**Checked Grammars** decides which files are checked as you type. `spell-check:check-selected` ignores it and checks whatever is selected — a docstring or a comment block in a source file the setting does not cover, without turning checking on for that whole language. Those results are reported separately and stay put until the command is run again, cleared, or the words are edited. Corrections work on them exactly as on anything else, so a word the command marked can be fixed or added to Known Words where it stands.
+**Checked Grammars** decides which files and descendant scopes are checked as you type. With no selection, `spell-check:check-spelling` checks the whole file using those grammar settings and **Excluded Scopes**. Select text to check every nonempty selection regardless of both settings — a docstring or a comment block in a source file the settings do not cover, without turning checking on for that whole language. Those results are reported separately and stay put until the command is run again, cleared, or the words are edited. Corrections work on them exactly as on anything else, so a word the command marked can be fixed or added to Known Words where it stands.
 
 **Excluded Scopes** keeps code out of prose by default: fenced and indented code blocks, inline code spans, embedded source regions, HTML tag names, attribute names and attribute values inside a checked grammar are not checked. Text between HTML tags is still checked. Clear the setting to have code checked too, or add selectors of your own to exclude more.
 
@@ -68,7 +68,7 @@ Misspellings are the linter's markers, so they are styled with its severity clas
 - `linter.provider`: provided to report each misspelling as a diagnostic.
 - `autocomplete.provider`: provided to offer the corrections in the autocomplete menu, above the buffer's own words.
 - `intentions.list`: provided to offer the corrections as code actions at the cursor.
-- `linter.registry`: consumed to publish a checked selection's results, which persist until they are replaced.
+- `linter.registry`: consumed to publish explicit spelling results, which persist until they are replaced.
 
 ## Contributing
 
