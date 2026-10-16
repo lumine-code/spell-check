@@ -70,7 +70,7 @@
     },
     "excludedScopes": {
       "title": "Excluded Scopes",
-      "description": "Detailed scope selectors ignored inside checked grammars. The defaults skip code blocks, inline code, embedded source, HTML tags and attributes. Text between HTML tags is still checked. Remove the exclusions to check code too.",
+      "description": "Detailed scope selectors ignored inside checked grammars. The defaults skip code blocks, inline code, embedded source, link destinations, HTML tags and attributes. Link text, image descriptions, link titles and text between HTML tags are still checked. Remove the exclusions to check those regions too.",
       "type": "array",
       "items": {
         "type": "string"
@@ -78,6 +78,7 @@
       "default": [
         "markup.raw",
         "markup.code",
+        "markup.underline.link",
         "meta.embedded",
         "entity.name.tag",
         "entity.other.attribute-name",
