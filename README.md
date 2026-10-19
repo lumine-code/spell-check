@@ -57,7 +57,7 @@ Where checking happens is the linter's decision, not this package's: only docume
 Misspellings are the linter's markers, so they are styled with its severity classes. To make them stand out from other diagnostics of the same severity, target the excerpt in your `styles.css`:
 
 ```css
-.linter-row .linter-excerpt {
+.diagnostics-row .diagnostics-excerpt {
   font-style: italic;
 }
 ```
