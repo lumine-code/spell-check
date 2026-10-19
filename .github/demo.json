@@ -1,18 +1,18 @@
 {
   "title": "spell-check",
   "description": "Identify spelling mistakes in project notes through linter diagnostics.",
-  "recordedOn": "2026-10-14",
-  "sourceRevision": "a84d1e97e1323cbb0632adcd9a70029c4ab77fe7",
-  "themeSourceRevision": "7fbd047a87ecf1367c896b19ff270cdc28d319f7",
+  "recordedOn": "2026-10-19",
+  "sourceRevision": "e8aa0af136c7305faa953b42522ae2a57b8c585a",
+  "themeSourceRevision": "1b8b1b57c87794d068b48e938fd81c9740a2e39d",
   "mode": "normal",
   "fontSettings": "default",
   "scenario": "demo.js",
-  "recipeHash": "93fa3dda886115db37a0f7cc4e131f679f81c1439569ab4442f1ea70e3f22b7c",
+  "recipeHash": "39437074d59a46799f83e34771f270884143c83495038269011ca86ea988fccb",
   "environment": {
     "platform": "win32",
     "arch": "x64",
-    "electron": "44.7.0",
-    "chrome": "152.0.7977.130",
+    "electron": "44.9.0",
+    "chrome": "152.0.7977.167",
     "devicePixelRatio": 1,
     "locale": "en-GB",
     "fontFamily": "Fira Code, Menlo, DejaVu Sans Mono, Consolas, monospace",
@@ -21,44 +21,45 @@
   },
   "viewport": { "width": 1100, "height": 500 },
   "cornerRadius": 10,
+  "privacy": { "version": 1, "location": "neutral", "textChecked": true },
   "sources": {
     "editor": {
-      "revision": "f843acddbced9b8bd7bbe0a96005bb55429694ce",
-      "dirty": false,
-      "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      "revision": "e13c8d8e990363ad18820418e75b5a757060f208",
+      "dirty": true,
+      "workingTreeHash": "20ee038740cf1086ce35ec1f650919f29db893fb0d5631c013187228202ff10d"
     },
     "package": {
-      "revision": "a84d1e97e1323cbb0632adcd9a70029c4ab77fe7",
+      "revision": "e8aa0af136c7305faa953b42522ae2a57b8c585a",
       "dirty": false,
       "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     },
     "spell-check": {
-      "revision": "a84d1e97e1323cbb0632adcd9a70029c4ab77fe7",
+      "revision": "e8aa0af136c7305faa953b42522ae2a57b8c585a",
       "dirty": false,
       "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     },
     "autocomplete": {
-      "revision": "6c09c061f8693eafa65d9e6077c8cb5c09e12ac2",
+      "revision": "714daeca38bb593fc7134ac5fcca6ddd39959e7b",
+      "dirty": true,
+      "workingTreeHash": "e992bc45d60536b8bdd80bc3414f2e42df5eaf422290f0d92a7677462e236bb8"
+    },
+    "diagnostics": {
+      "revision": "fe9dc55ce824699f1e79b31817c9c3c6f73ac22d",
       "dirty": false,
       "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     },
     "language-gfm": {
-      "revision": "be723ccf806fdd4a2a06638f6e881c09a53b4409",
+      "revision": "2220adaf1ebdc993a9316394d2cc1be6b48fa1ff",
       "dirty": false,
       "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     },
     "linter": {
-      "revision": "adec0e9d64ffe64f9e041df825324efc0795601b",
+      "revision": "c9584dda26a14a3859e40a153ab27018a7c6223c",
       "dirty": true,
-      "workingTreeHash": "bc72c0afefb416d396eb209e3ef758b6ef4cb17d5a24d3d4af95b1b4fbdb8e75"
-    },
-    "diagnostics": {
-      "revision": "52b4727794bf840757d2c6ec818329f954ecfb25",
-      "dirty": true,
-      "workingTreeHash": "2241dd689405cc52970f9f0be515276ed372a29e9bfa068e89f434bbcac245f6"
+      "workingTreeHash": "7504c71931391dc0b96debe734ad724efd3ce04dee0e94ed6c69f77eabf37a20"
     },
     "one-theme": {
-      "revision": "7fbd047a87ecf1367c896b19ff270cdc28d319f7",
+      "revision": "1b8b1b57c87794d068b48e938fd81c9740a2e39d",
       "dirty": false,
       "workingTreeHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
     }
@@ -75,7 +76,7 @@
       "label": "Identify spelling mistakes in project notes through linter diagnostics.",
       "width": 1100,
       "height": 500,
-      "sha256": "f31f9b64168a6d524124edf69971ea674b1168ab447d4f0f423f25fdc44b5524"
+      "sha256": "3a1617fad2243312b2b5ac46d02752cb138e416c3447300784c24f2d1d6c8feb"
     }
   ]
 }
