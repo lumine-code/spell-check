@@ -60,6 +60,18 @@ describe("Spell Check selection lifetime", () => {
     expect(main.checkers.get(editor).selectionMessages).toEqual([]);
   });
 
+  it("retains selection diagnostics during syntax paint and clears them on a source edit", async () => {
+    const result = check();
+    complete();
+    await result;
+    expect(main.indie.getMessages().length).toBe(1);
+    const buffer = editor.getBuffer();
+    buffer.getLanguageMode().emitter.emit("did-change-highlighting", buffer.getRange());
+    expect(main.indie.getMessages().length).toBe(1);
+    editor.insertText("changed");
+    expect(main.indie.getMessages()).toEqual([]);
+  });
+
   it("does not publish a pending selection under a renamed editor path", async () => {
     editor.getBuffer().setPath(path.join(__dirname, "selection-source.txt"));
     const result = check();

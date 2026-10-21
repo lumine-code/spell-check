@@ -562,23 +562,23 @@ describe("spell-check", () => {
     });
 
     it("does not resolve scope descriptors when nothing narrows the buffer", async () => {
-      spyOn(editor, "scopeDescriptorForBufferPosition").and.callThrough();
+      spyOn(editor, "getScopeDescriptorsForBufferPositions").and.callThrough();
       editor.setText("thiss and thatt");
 
       expect((await lint()).length).toBe(2);
       // Every checked grammar is a bare root scope and nothing is excluded, so
       // no descriptor can change the outcome and none should be asked for.
-      expect(editor.scopeDescriptorForBufferPosition).not.toHaveBeenCalled();
+      expect(editor.getScopeDescriptorsForBufferPositions).not.toHaveBeenCalled();
     });
 
     it("resolves scope descriptors once something does narrow the buffer", async () => {
       lumine.config.set("spell-check.excludedScopes", ["comment"]);
-      spyOn(editor, "scopeDescriptorForBufferPosition").and.callThrough();
+      spyOn(editor, "getScopeDescriptorsForBufferPositions").and.callThrough();
       editor.setText("thiss and thatt");
 
       await lint();
 
-      expect(editor.scopeDescriptorForBufferPosition).toHaveBeenCalled();
+      expect(editor.getScopeDescriptorsForBufferPositions).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -618,10 +618,11 @@ describe("spell-check", () => {
       );
       // The inline span's scopes come from an injected grammar, so wait until
       // they are actually in the tree before asking for messages.
-      await conditionPromise(() => {
-        const scopes = editor.scopeDescriptorForBufferPosition([2, 32]).getScopesArray();
-        return scopes.some((scope) => /markup\.raw|meta\.embedded/.test(scope));
-      });
+      await editor.whenGrammarSettled();
+      const [descriptor] = await editor.getScopeDescriptorsForBufferPositions([[2, 32]]);
+      expect(
+        descriptor.getScopesArray().some((scope) => /markup\.raw|meta\.embedded/.test(scope)),
+      ).toBeTrue();
 
       expect(wordsIn(await lint())).toEqual(["heddingmistak", "prosemistak"]);
     });
