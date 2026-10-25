@@ -17,6 +17,31 @@ describe("spell-check with no grammar", () => {
     lumine.config.unset("spell-check.useLocales");
   });
 
+  it("retires old correction actions across None and a resumed grammar", () => {
+    const grammar = lumine.grammars.grammarForScopeName("text.plain");
+    editor.setGrammar(grammar);
+    const checker = main.checkerFor(editor);
+    spyOn(checker, "correctionsAt").and.returnValue({
+      range: [
+        [0, 0],
+        [0, 9],
+      ],
+      corrections: [{ label: "Correct", isSuggestion: true, suggestion: "correct" }],
+    });
+    const [action] = main.provideIntentionsList().getIntentions({
+      textEditor: editor,
+      bufferPosition: [0, 0],
+    });
+    spyOn(main, "applyCorrection").and.callThrough();
+    editor.setGrammar(lumine.grammars.nullGrammar);
+    action.selected();
+    editor.setGrammar(grammar);
+    main.checkerFor(editor);
+    action.selected();
+    expect(main.applyCorrection).not.toHaveBeenCalled();
+    expect(editor.getText()).toBe("misspeled word");
+  });
+
   it("drops cached corrections, skips even explicit selections and resumes on a grammar", async () => {
     const grammar = lumine.grammars.grammarForScopeName("text.plain");
     editor.setGrammar(grammar);
