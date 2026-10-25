@@ -1,4 +1,9 @@
 describe("spelling context correction target", () => {
+  // Processing fixtures use a real grammar; None deliberately disables this package.
+  beforeEach(async () => {
+    await lumine.packages.activatePackage("language-text");
+  });
+
   let main, editor, element, calls, dispatch;
   function seed() {
     const checker = main.checkers.get(editor);

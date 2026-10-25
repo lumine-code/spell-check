@@ -2,6 +2,11 @@ const path = require("node:path");
 const { scopeDescriptorMatchesSelector } = require("../lib/scope-helper");
 
 describe("spell-check", () => {
+  // Processing fixtures use a real grammar; None deliberately disables this package.
+  beforeEach(async () => {
+    await lumine.packages.activatePackage("language-text");
+  });
+
   let editor;
   let main;
   let linter;

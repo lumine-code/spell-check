@@ -1,4 +1,9 @@
 describe("Spell Check command availability", () => {
+  // Processing fixtures use a real grammar; None deliberately disables this package.
+  beforeEach(async () => {
+    await lumine.packages.activatePackage("language-text");
+  });
+
   let main, editor;
   beforeEach(async () => {
     jasmine.attachToDOM(lumine.workspace.getElement());

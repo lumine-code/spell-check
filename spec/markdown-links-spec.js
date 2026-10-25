@@ -1,4 +1,9 @@
 describe("Markdown spelling ranges", () => {
+  // Processing fixtures use a real grammar; None deliberately disables this package.
+  beforeEach(async () => {
+    await lumine.packages.activatePackage("language-text");
+  });
+
   let main, editor, linter;
   const wordsIn = (messages) =>
     messages.map((message) => editor.getTextInBufferRange(message.location.position));

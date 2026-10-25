@@ -1,6 +1,11 @@
 const path = require("path");
 
 describe("Spell Check selection lifetime", () => {
+  // Processing fixtures use a real grammar; None deliberately disables this package.
+  beforeEach(async () => {
+    await lumine.packages.activatePackage("language-text");
+  });
+
   let main, linterMain, editor, replies, rejections, pending, providers;
   function complete(index = 0) {
     replies[index]({

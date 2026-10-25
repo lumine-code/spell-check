@@ -15,6 +15,11 @@ function deferredManager() {
 }
 
 describe("lib/spell-check-queue", () => {
+  // Processing fixtures use a real grammar; None deliberately disables this package.
+  beforeEach(async () => {
+    await lumine.packages.activatePackage("language-text");
+  });
+
   let manager;
   let editors;
 

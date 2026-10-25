@@ -40,6 +40,8 @@ Commands available in `lumine-workspace`:
 
 ## Usage
 
+Selecting **None** as a file's grammar disables spelling checks, including explicit selection checks, and clears its cached corrections. Checking becomes available again when a grammar is selected.
+
 A misspelling is reported as a hint by default: a subtle underline without a gutter dot. Set **Severity** to `error` to use a red underline.
 
 Corrections are autocomplete suggestions. `spell-check:correct-misspelling` opens the autocomplete menu on the misspelling under the cursor and the corrections are at the top of it; picking one replaces the whole word, wherever inside it the cursor happened to be. A misspelling with exactly one correction is simply fixed, since the menu confirms a lone suggestion without opening. They do not appear while typing — only when the menu is asked for. With the `intentions` package installed the same set is in its code-action menu too, beside a language server's own fixes.
