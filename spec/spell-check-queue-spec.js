@@ -48,6 +48,103 @@ describe("lib/spell-check-queue", () => {
     expect(manager.pending.length).toBe(0);
   });
 
+  it("rejects oversized requests before materializing their source", async () => {
+    const editor = await editorWith("word".repeat(8192));
+    const buffer = editor.getBuffer();
+    let source = buffer.getTextSnapshot();
+    while (source.canMaterialize()) source = source.replace(source.length, source.length, source);
+    spyOn(buffer, "getTextSnapshot").and.returnValue(source);
+    const read = spyOn(buffer, "getText").and.throwError("Whole-buffer read");
+    try {
+      await expectAsync(queue.check(manager, editor)).toBeRejectedWith(
+        jasmine.objectContaining({ code: "ERR_SPELL_CHECK_LIMIT" }),
+      );
+      expect(read).not.toHaveBeenCalled();
+      expect(manager.pending.length).toBe(0);
+    } finally {
+      read.and.callThrough();
+    }
+  });
+
+  it("keeps queued sources immutable and skips obsolete ones before reading", async () => {
+    const first = await editorWith("blocking");
+    const second = await editorWith("queued");
+    const blocked = queue.check(manager, first);
+    const pending = queue.check(manager, second);
+    const source = queue.queue[0].source;
+    expect(source.toString()).toBe("queued");
+    const read = jasmine.createSpy("queued source read").and.throwError("Queued source read");
+    queue.queue[0].source = { toString: read };
+    second.setText("changed");
+    manager.settleFirst();
+    await blocked;
+    expect(await pending).toBeNull();
+    expect(read).not.toHaveBeenCalled();
+    expect(manager.pending.length).toBe(0);
+  });
+
+  it("releases the queue after a synchronous provider failure", async () => {
+    const editor = await editorWith("word");
+    await expectAsync(
+      queue.check(
+        {
+          check() {
+            throw new Error("provider failed");
+          },
+        },
+        editor,
+      ),
+    ).toBeRejectedWithError("provider failed");
+    const pending = queue.check(manager, editor);
+    expect(manager.pending.length).toBe(1);
+    manager.settleFirst();
+    expect(await pending).toEqual([]);
+  });
+
+  it("reports oversized diagnostic sets instead of returning a partial success", async () => {
+    const editor = await editorWith("word");
+    const pending = queue.check(manager, editor);
+    manager.settleFirst(
+      new Array(10001).fill([
+        [0, 0],
+        [0, 1],
+      ]),
+    );
+    await expectAsync(pending).toBeRejectedWith(
+      jasmine.objectContaining({ code: "ERR_SPELL_CHECK_LIMIT" }),
+    );
+  });
+
+  it("clears stale diagnostics once on budget refusal and resumes on a smaller request", async () => {
+    const editor = await editorWith("word");
+    const EditorChecker = require("../lib/editor-checker");
+    const checker = new EditorChecker(editor, manager);
+    spyOn(checker, "spellCheckCurrentGrammar").and.returnValue(true);
+    spyOn(checker, "getSpellCheckScopesForCurrentGrammar").and.returnValue(true);
+    const warning = spyOn(lumine.notifications, "addWarning").and.callThrough();
+    checker.messages = [{ excerpt: "old" }];
+    try {
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const pending = checker.lint();
+        manager.settleFirst(
+          new Array(10001).fill([
+            [0, 0],
+            [0, 1],
+          ]),
+        );
+        expect(await pending).toEqual([]);
+      }
+      expect(checker.messages).toEqual([]);
+      expect(warning.calls.count()).toBe(1);
+      const pending = checker.lint();
+      manager.settleFirst();
+      expect(await pending).toEqual([]);
+      expect(checker.limitNotification).toBeNull();
+    } finally {
+      checker.destroy();
+    }
+  });
+
   it("checks one buffer at a time across separate editors", async () => {
     const first = await editorWith("alpha");
     const second = await editorWith("bravo");

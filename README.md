@@ -56,6 +56,8 @@ Where checking happens is the linter's decision, not this package's: only docume
 
 ## Customization
 
+Native dictionaries and external checker modules receive complete strings under a 2 Mi UTF-16 input budget. Queued requests retain immutable snapshots and materialize only when selected to run; editing, grammar changes or cancellation retire stale requests. Automatic checks pause with one notification and clear old diagnostics when the input or 10,000-result presentation budget is exceeded, then resume after shrinking. Explicit selection checks apply the input budget to their combined text and report failure without publishing partial results or claiming that no misspellings exist.
+
 Misspellings are the linter's markers, so they are styled with its severity classes. To make them stand out from other diagnostics of the same severity, target the excerpt in your `styles.css`:
 
 ```css
