@@ -84,4 +84,28 @@ describe("spell-check with no grammar", () => {
     expect(main.checkerFor(editor)).not.toBe(checker);
     expect(main.checkerFor(editor).spellCheckCurrentGrammar()).toBe(true);
   });
+
+  it("retires a captured correction menu across None without flattening the buffer", () => {
+    const grammar = editor.getGrammar();
+    const checker = main.checkerFor(editor);
+    checker.messages = [
+      {
+        location: {
+          position: [
+            [0, 0],
+            [0, 9],
+          ],
+        },
+      },
+    ];
+    editor.setCursorBufferPosition([0, 3]);
+    const read = spyOn(editor.getBuffer(), "getText").and.throwError("No full-text menu snapshot");
+    const context = main.correctionContext({ target: editor.element }, main.activation);
+    expect(context.isCurrent()).toBe(true);
+    editor.setGrammar(lumine.grammars.nullGrammar);
+    expect(context.isCurrent()).toBe(false);
+    editor.setGrammar(grammar);
+    expect(context.isCurrent()).toBe(false);
+    expect(read).not.toHaveBeenCalled();
+  });
 });
