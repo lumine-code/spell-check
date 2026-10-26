@@ -193,7 +193,7 @@
     }
   },
   "dependencies": {
-    "@lumine-code/native-spelling": "github:lumine-code/native-spelling#9101703ce7e1c6416f8709f209307a4916dc5caa",
+    "@lumine-code/native-spelling": "github:lumine-code/native-spelling#baa214f9fb784ab0cc0dc746c8e96e09286ec93f",
     "debug": "^4.4.3",
     "multi-integer-range": "^6.1.0"
   },
@@ -206,6 +206,6 @@
     "prettier": "^3.9.10"
   },
   "allowScripts": {
-    "github:lumine-code/native-spelling#9101703ce7e1c6416f8709f209307a4916dc5caa": true
+    "github:lumine-code/native-spelling#baa214f9fb784ab0cc0dc746c8e96e09286ec93f": true
   }
 }
