@@ -30,7 +30,9 @@
   "specPackages": [
     "language-gfm",
     "language-html",
+    "language-ipython",
     "language-javascript",
+    "language-python",
     "linter"
   ],
   "scripts": {
@@ -62,6 +64,7 @@
       "default": [
         "source.asciidoc",
         "source.gfm",
+        "source.python.ipy source.gfm",
         "text.git-commit",
         "text.plain",
         "text.plain.null-grammar",
