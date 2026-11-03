@@ -196,19 +196,27 @@
     }
   },
   "dependencies": {
-    "@lumine-code/native-spelling": "github:lumine-code/native-spelling#baa214f9fb784ab0cc0dc746c8e96e09286ec93f",
+    "@lumine-code/native-spelling": "github:lumine-code/native-spelling#cf32a43c8995878b1b704fa33a508414fe056164",
     "debug": "^4.4.3",
     "multi-integer-range": "^6.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "eslint": "^10.13.0",
+    "eslint": "^10.14.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-n": "^18.5.0",
-    "globals": "^17.13.0",
+    "globals": "^17.14.0",
     "prettier": "^3.9.10"
   },
   "allowScripts": {
-    "github:lumine-code/native-spelling#baa214f9fb784ab0cc0dc746c8e96e09286ec93f": true
+    "github:lumine-code/native-spelling#cf32a43c8995878b1b704fa33a508414fe056164": true
+  },
+  "overrides": {
+    "eslint@^10.14.0": {
+      "minimatch": "11.0.4"
+    },
+    "@eslint/config-array@0.23.5": {
+      "minimatch": "11.0.4"
+    }
   }
 }
