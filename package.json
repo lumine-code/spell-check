@@ -196,7 +196,7 @@
     }
   },
   "dependencies": {
-    "@lumine-code/native-spelling": "github:lumine-code/native-spelling#3a004bd9944254d26bbddfc9c39409c886c716d1",
+    "@lumine-code/native-spelling": "github:lumine-code/native-spelling#1022ec5aea58f3f296490e2f0e6becdb0ba81651",
     "debug": "^4.4.3",
     "multi-integer-range": "^6.1.0"
   },
@@ -209,7 +209,7 @@
     "prettier": "^3.9.10"
   },
   "allowScripts": {
-    "github:lumine-code/native-spelling#3a004bd9944254d26bbddfc9c39409c886c716d1": true
+    "github:lumine-code/native-spelling#1022ec5aea58f3f296490e2f0e6becdb0ba81651": true
   },
   "overrides": {
     "eslint@^10.14.0": {
