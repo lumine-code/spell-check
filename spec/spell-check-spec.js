@@ -686,9 +686,12 @@ describe("spell-check", () => {
     it("holds its messages until the grammar has settled", async () => {
       editor.setText("Prose with a prosemistak and `inlinemistak` span.\n");
       const checker = main.checkerFor(editor);
+      const settleGrammar = editor.whenGrammarSettled.bind(editor);
       let releaseParsing;
-      const whenGrammarSettled = spyOn(editor, "whenGrammarSettled").and.returnValue(
-        new Promise((resolve) => (releaseParsing = resolve)),
+      const parsingReleased = new Promise((resolve) => (releaseParsing = resolve));
+      // Releasing the test gate must still await the real injected grammar work.
+      const whenGrammarSettled = spyOn(editor, "whenGrammarSettled").and.callFake((options) =>
+        parsingReleased.then(() => settleGrammar(options)),
       );
 
       let messages = null;
