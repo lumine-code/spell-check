@@ -3,6 +3,7 @@ Third-party notices
 ----- BEGIN THIRD-PARTY LICENSE: upstream:pulsar-edit_pulsar -----
 Source: https://github.com/pulsar-edit/pulsar
 Revision: 857b0d17a64145205f4db636ff8971a4115c25f6
+Additional source revision: 4483b6d4a91a756fbbae084b1e4a32b111bd6c75 (remove default dictionary searches at filesystem roots).
 Original paths: packages/spell-check
 
 Original file: LICENSE.md

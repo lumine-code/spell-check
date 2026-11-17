@@ -32,6 +32,7 @@ describe("spell checkers", () => {
       spellchecker.Spellchecker = class FakeSpellchecker {
         constructor() {
           this.type = null;
+          this.searchedPaths = [];
           built.push(this);
         }
 
@@ -42,6 +43,7 @@ describe("spell checkers", () => {
         // Both the packaged dictionary and the system service can serve this
         // locale. Only one of them should ever be asked.
         setDictionary(locale, path) {
+          this.searchedPaths.push(path);
           return this.type === spellchecker.ALWAYS_USE_HUNSPELL ? path === packagedPath : true;
         }
       };
@@ -61,6 +63,7 @@ describe("spell checkers", () => {
       // against Hunspell's 0.05ms, so it has to come last.
       expect(checker.source).toBe("packaged");
       expect(built.length).toBe(1);
+      expect(built[0].searchedPaths).not.toContain("C:\\");
     });
 
     it("falls back to the system service when no dictionary is installed", () => {
